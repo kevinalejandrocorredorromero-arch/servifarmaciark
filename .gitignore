@@ -29,3 +29,6 @@ codex-skills-master.zip
 
 # Volcados de BD generados: nunca al repo (pueden contener datos de usuarios)
 /database/*.sql
+
+# Certificado CA de Aiven: solo para uso local durante la importación
+/ca.pem

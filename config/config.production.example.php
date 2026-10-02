@@ -3,10 +3,12 @@
 return [
     'db' => [
         'host' => 'db',
+        'port' => 3306,
         'user' => 'servifarmacia',
         'pass' => 'CHANGE_ME',
         'name' => 'servifarmacia_rk',
         'charset' => 'utf8mb4',
+        'ssl' => false,
     ],
     'ai' => [
         'provider' => 'huggingface',
@@ -32,5 +34,10 @@ return [
         'bot_token' => 'CHANGE_ME',
         'chat_id' => 'CHANGE_ME',
         'umbral_bajo_stock' => 10,
+    ],
+    'brevo' => [
+        'api_key' => 'CHANGE_ME',
+        'sender_email' => 'CHANGE_ME',
+        'sender_name' => 'SERVIFARMACIA RK',
     ],
 ];

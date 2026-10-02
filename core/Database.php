@@ -9,9 +9,12 @@ class Database {
         $db = $config['db'];
 
         mysqli_report(MYSQLI_REPORT_OFF);
-        $this->conexion = mysqli_connect($db['host'], $db['user'], $db['pass'], $db['name']);
-        if (!$this->conexion) {
-            error_log('[Database] Conexión MySQL fallida: ' . mysqli_connect_errno());
+        $port = isset($db['port']) ? (int) $db['port'] : 3306;
+        $flags = !empty($db['ssl']) ? MYSQLI_CLIENT_SSL : 0;
+        $this->conexion = mysqli_init();
+        if (!$this->conexion
+            || !mysqli_real_connect($this->conexion, $db['host'], $db['user'], $db['pass'], $db['name'], $port, null, $flags)) {
+            error_log('[Database] Conexión MySQL fallida: ' . mysqli_connect_error());
             throw new RuntimeException('No se pudo conectar a la base de datos.');
         }
         if (!mysqli_set_charset($this->conexion, $db['charset'])) {

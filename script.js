@@ -59,9 +59,10 @@ async function appInit() {
   }
 
   const productFallbackPool = Object.values(productFallbackImages)
+  const appBasePath = new URL('.', document.baseURI).pathname
 
   function productImageUrl(url, category = '', productId = '') {
-    if (url) return url.startsWith('images/products/') ? '/servifarmacia%20rk/' + url : url
+    if (url) return url.startsWith('images/products/') ? appBasePath + url : url
     const categoryImage = productFallbackImages[category]
     const seed = Number(productId) || String(productId || '').length
     const offset = seed % productFallbackPool.length

@@ -1,0 +1,2576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANDRÓMEDA — Campo gravitacional: entre masas y fuerza</title>
+<meta name="description" content="Proyecto de investigación escolar ANDRÓMEDA (Grupo #4): simuladores interactivos de caída libre, experimentos caseros y marco teórico sobre el campo gravitacional.">
+<meta name="theme-color" content="#04060e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5.4' fill='%23f2b441'/%3E%3Cellipse cx='16' cy='16' rx='13.5' ry='5.8' fill='none' stroke='%234ee0c8' stroke-width='1.7' transform='rotate(-24 16 16)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ TOKENS ═══════════════ */
+:root{
+  --void:#04060e; --deep:#070b18; --panel:#0b1020; --panel-2:#0f1528; --raise:#141b32;
+  --ivory:#f1eee4; --muted:#a3acc6; --dim:#737d99; --faint:#4d5570;
+  --brass:#f2b441; --brass-hi:#ffd98a; --brass-dp:#a06f14;
+  --teal:#4ee0c8; --teal-deep:#12897a; --rose:#ff7a9c; --violet:#8f80f0; --ember:#ff7849;
+  --line:rgba(241,238,228,.09); --line-2:rgba(241,238,228,.16); --line-3:rgba(241,238,228,.30);
+  --r-s:8px; --r-m:14px; --r-l:22px;
+  --fd:'Fraunces','Iowan Old Style',Georgia,serif;
+  --fs:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --fm:'IBM Plex Mono',ui-monospace,'SFMono-Regular',monospace;
+  --ease:cubic-bezier(.22,.61,.36,1); --out:cubic-bezier(.16,1,.3,1);
+  --maxw:1240px;
+  --sh-1:0 1px 0 rgba(255,255,255,.04) inset, 0 18px 44px -26px rgba(0,0,0,.95);
+  --sh-2:0 1px 0 rgba(255,255,255,.07) inset, 0 34px 80px -34px rgba(0,0,0,1);
+  --glow-brass:0 0 0 1px rgba(242,180,65,.34), 0 14px 44px -14px rgba(242,180,65,.42);
+  --glow-teal:0 0 0 1px rgba(78,224,200,.30), 0 14px 44px -14px rgba(78,224,200,.36);
+}
+
+/* ═══════════════ BASE ═══════════════ */
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  font-family:var(--fs);
+  background:var(--void);
+  color:var(--ivory);
+  font-size:16px;
+  line-height:1.62;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+img,svg,canvas{display:block;max-width:100%}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--teal);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--teal) 30%,transparent);transition:border-color .2s,color .2s}
+a:hover{color:var(--brass-hi);border-bottom-color:color-mix(in srgb,var(--brass) 55%,transparent)}
+::selection{background:color-mix(in srgb,var(--brass) 34%,transparent);color:#fff}
+strong{font-weight:600;color:var(--ivory)}
+em{font-style:italic}
+
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.ic{width:1.15em;height:1.15em;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ic--fill{fill:currentColor;stroke:none}
+.skip{position:fixed;top:10px;left:50%;translate:-50% 0;z-index:999;padding:10px 20px;border-radius:99px;background:var(--brass);color:#1a1204;font-weight:600;border:0;translate:-50% -160%;transition:translate .25s var(--out)}
+.skip:focus{translate:-50% 0}
+:focus-visible{outline:2px solid var(--brass);outline-offset:3px;border-radius:4px}
+
+.wrap{width:100%;max-width:var(--maxw);margin-inline:auto;padding-inline:22px}
+
+/* ═══════════════ BACKGROUNDS ═══════════════ */
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.bg>*{position:absolute;inset:0}
+.bg--sky{background:
+  radial-gradient(120% 78% at 50% -12%, #16204a 0%, #0a1029 42%, var(--void) 78%),
+  linear-gradient(180deg,#060a18 0%,var(--void) 60%);}
+.bg--nebula{
+  background:
+    radial-gradient(46% 38% at 12% 8%, rgba(143,128,240,.20), transparent 68%),
+    radial-gradient(40% 34% at 88% 18%, rgba(78,224,200,.13), transparent 70%),
+    radial-gradient(52% 40% at 74% 92%, rgba(242,180,65,.11), transparent 72%),
+    radial-gradient(38% 30% at 26% 78%, rgba(255,122,156,.09), transparent 70%);
+  filter:blur(6px);
+  animation:drift 46s ease-in-out infinite alternate;
+}
+@keyframes drift{from{transform:translate3d(-1.6%,-1%,0) scale(1.04)}to{transform:translate3d(1.8%,1.4%,0) scale(1.1)}}
+.bg--stars canvas{width:100%;height:100%}
+.bg--grid{
+  background-image:
+    linear-gradient(to right, rgba(241,238,228,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(241,238,228,.055) 1px, transparent 1px);
+  background-size:72px 72px;
+  -webkit-mask-image:radial-gradient(105% 72% at 50% 0%, #000 0%, transparent 74%);
+  mask-image:radial-gradient(105% 72% at 50% 0%, #000 0%, transparent 74%);
+}
+.bg--grain{
+  opacity:.30;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s var(--out),transform .7s var(--out)}
+.rv.in{opacity:1;transform:none}
+
+/* ═══════════════ TOPBAR ═══════════════ */
+.topbar{position:sticky;top:0;z-index:60;background:color-mix(in srgb,var(--void) 76%,transparent);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid var(--line)}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(242,180,65,.55),rgba(78,224,200,.4),transparent);opacity:.7}
+.topbar__in{display:flex;align-items:center;gap:20px;min-height:66px}
+.brand{display:flex;align-items:center;gap:11px;flex:none}
+.brand__mark{width:36px;height:36px;flex:none;position:relative}
+.brand__mark svg{width:100%;height:100%}
+.brand__orbit{animation:orbit-spin 14s linear infinite;transform-origin:18px 18px}
+@keyframes orbit-spin{to{transform:rotate(360deg)}}
+.brand__txt{display:flex;flex-direction:column;line-height:1}
+.brand__txt b{font-family:var(--fd);font-variation-settings:"opsz" 40;font-weight:600;font-size:17px;letter-spacing:.16em;color:var(--ivory)}
+.brand__txt i{font-style:normal;font-family:var(--fm);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin-top:5px}
+
+.nav{flex:1 1 auto;min-width:0}
+.nav__sc{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:4px 0;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);}
+.nav__sc::-webkit-scrollbar{display:none}
+.tab{position:relative;display:flex;align-items:center;gap:8px;padding:9px 15px;border:0;background:none;cursor:pointer;
+  border-radius:99px;color:var(--dim);font-size:13.5px;font-weight:500;letter-spacing:.01em;white-space:nowrap;
+  transition:color .25s var(--ease)}
+.tab .ic{width:16px;height:16px;opacity:.85;transition:transform .35s var(--out)}
+.tab__pill{position:absolute;inset:0;border-radius:99px;background:var(--raise);border:1px solid var(--line-2);
+  opacity:0;transform:scale(.86);z-index:-1;transition:opacity .28s var(--ease),transform .28s var(--out),background .28s,border-color .28s}
+.tab{isolation:isolate}
+.tab:hover{color:var(--ivory)}
+.tab:hover .tab__pill{opacity:1;transform:scale(1)}
+.tab:hover .ic{transform:translateY(-1px) scale(1.08)}
+.tab[aria-selected="true"]{color:#1a1204;font-weight:600}
+.tab[aria-selected="true"] .tab__pill{opacity:1;transform:scale(1);background:linear-gradient(160deg,var(--brass-hi),var(--brass) 55%,#e0a02c);border-color:rgba(255,217,138,.6);box-shadow:var(--glow-brass)}
+.tab[aria-selected="true"] .ic{opacity:1}
+
+.gchip{flex:none;display:flex;align-items:center;gap:9px;padding:7px 14px 7px 10px;border-radius:99px;
+  background:color-mix(in srgb,var(--panel) 80%,transparent);border:1px solid var(--line-2);box-shadow:var(--sh-1)}
+.gchip__d{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(78,224,200,.6)}
+.gchip.is-live .gchip__d{animation:blink 1.6s ease-out infinite}
+@keyframes blink{0%{box-shadow:0 0 0 0 rgba(78,224,200,.55)}70%{box-shadow:0 0 0 9px rgba(78,224,200,0)}100%{box-shadow:0 0 0 0 rgba(78,224,200,0)}}
+.gchip__t{display:flex;flex-direction:column;line-height:1.15}
+.gchip__t b{font-family:var(--fm);font-size:14px;font-weight:600;color:var(--brass-hi);letter-spacing:-.01em}
+.gchip__t i{font-style:normal;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-family:var(--fm)}
+
+/* ═══════════════ HERO ═══════════════ */
+.hero{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:48px;align-items:center;padding:72px 22px 48px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;padding:6px 14px 6px 11px;border-radius:99px;
+  background:color-mix(in srgb,var(--panel) 72%,transparent);border:1px solid var(--line-2);
+  font-family:var(--fm);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--brass);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(242,180,65,.5)}50%{opacity:.55;box-shadow:0 0 0 7px rgba(242,180,65,0)}}
+.hero__title{font-family:var(--fd);font-variation-settings:"opsz" 110;font-weight:300;
+  font-size:clamp(3rem,8vw,6rem);line-height:.93;letter-spacing:-.035em;margin:22px 0 0;color:var(--ivory)}
+.hero__title em{display:block;font-style:italic;font-weight:600;
+  background:linear-gradient(100deg,var(--brass-hi) 0%,var(--brass) 38%,var(--ember) 72%,var(--rose) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.hero__rule{width:112px;height:2px;margin:26px 0 22px;background:linear-gradient(90deg,var(--brass),transparent);border-radius:2px}
+.hero__lead{max-width:52ch;font-size:16.5px;line-height:1.75;color:var(--muted)}
+.hero__lead strong{color:var(--ivory);font-weight:600}
+.hero__cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:44px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.hero__stats>div{padding:16px 16px 4px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.hero__stats b{display:block;font-family:var(--fd);font-variation-settings:"opsz" 60;font-weight:500;font-size:30px;line-height:1;color:var(--brass-hi);letter-spacing:-.02em}
+.hero__stats i{display:block;font-style:normal;font-family:var(--fm);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin-top:9px}
+
+.orrery-wrap{position:relative;display:grid;place-items:center;min-height:400px}
+.orrery{position:relative;width:min(100%,400px);aspect-ratio:1}
+.orrery__field{position:absolute;inset:0;animation:orbit-spin 92s linear infinite}
+.ring{position:absolute;border-radius:50%;border:1px dashed rgba(241,238,228,.13)}
+.ring--1{inset:19%;animation:orbit-spin 9s linear infinite}
+.ring--2{inset:6%;border-style:solid;border-color:rgba(241,238,228,.07);animation:orbit-spin 16s linear infinite reverse}
+.ring--3{inset:33%;animation:orbit-spin 5.5s linear infinite}
+.ring--1,.ring--3{border-style:solid;border-color:rgba(241,238,228,.10)}
+.bodydot{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;margin-top:-6.5px;left:-6.5px}
+.bodydot--a{background:radial-gradient(circle at 32% 30%,#ffd98a,#f2b441 45%,#8a5c10);box-shadow:0 0 16px rgba(242,180,65,.65)}
+.bodydot--b{background:radial-gradient(circle at 32% 30%,#a5f3fc,#4ee0c8 45%,#0d6b60);box-shadow:0 0 16px rgba(78,224,200,.6);width:10px;height:10px;margin-top:-5px;left:-5px}
+.bodydot--c{background:radial-gradient(circle at 32% 30%,#ffc2d1,#ff7a9c 45%,#8c2f47);box-shadow:0 0 14px rgba(255,122,156,.55);width:8px;height:8px;margin-top:-4px;left:-4px}
+.orrery__star{position:absolute;top:50%;left:50%;width:66px;height:66px;margin:-33px 0 0 -33px;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,#fff6dd,#ffd98a 26%,#f2b441 52%,#b06f10 78%,#5d3708);
+  box-shadow:0 0 44px 6px rgba(242,180,65,.42),0 0 120px 26px rgba(242,180,65,.16);
+  animation:breathe 5.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.045);filter:brightness(1.14)}}
+.orrery__cap{position:absolute;bottom:-6px;left:50%;translate:-50% 0;font-family:var(--fm);font-size:10px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+
+/* ═══════════════ MAIN / PANELS ═══════════════ */
+main{position:relative;z-index:1;padding-bottom:40px}
+.panel-wrap{display:none}
+.panel-wrap.is-on{display:block;animation:panelIn .5s var(--out) both}
+@keyframes panelIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.card{position:relative;background:linear-gradient(168deg,color-mix(in srgb,var(--panel-2) 92%,transparent),color-mix(in srgb,var(--panel) 96%,transparent));
+  border:1px solid var(--line);border-radius:var(--r-l);padding:30px;box-shadow:var(--sh-1);overflow:hidden;margin-bottom:22px}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(241,238,228,.24) 22%,rgba(242,180,65,.3) 50%,rgba(241,238,228,.2) 78%,transparent)}
+.card--tight{padding:22px}
+.card--flush{padding:0}
+
+.sec-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.sec-ico{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;
+  background:linear-gradient(150deg,rgba(242,180,65,.20),rgba(242,180,65,.05));
+  border:1px solid rgba(242,180,65,.28);color:var(--brass-hi)}
+.sec-ico .ic{width:20px;height:20px}
+.sec-ico--teal{background:linear-gradient(150deg,rgba(78,224,200,.18),rgba(78,224,200,.04));border-color:rgba(78,224,200,.26);color:var(--teal)}
+.sec-ico--violet{background:linear-gradient(150deg,rgba(143,128,240,.18),rgba(143,128,240,.04));border-color:rgba(143,128,240,.26);color:var(--violet)}
+.sec-head__t{min-width:0;flex:1}
+.sec-num{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+h2.blk{font-family:var(--fd);font-variation-settings:"opsz" 60;font-weight:500;font-size:clamp(1.5rem,2.6vw,2rem);line-height:1.16;letter-spacing:-.022em;color:var(--ivory)}
+h3.blk{font-family:var(--fd);font-variation-settings:"opsz" 36;font-weight:500;font-size:1.28rem;line-height:1.25;letter-spacing:-.015em;color:var(--ivory)}
+h4.sub{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin-bottom:10px}
+p.body{color:var(--muted);font-size:15.2px;line-height:1.78}
+p.body+p.body{margin-top:12px}
+.acc-b{color:var(--brass-hi);font-weight:600}
+.acc-t{color:var(--teal);font-weight:600}
+.acc-v{color:var(--violet);font-weight:600}
+.acc-r{color:var(--rose);font-weight:600}
+ul.list{list-style:none;margin:12px 0 0;display:grid;gap:9px}
+ul.list li{position:relative;padding-left:22px;color:var(--muted);font-size:15px;line-height:1.7}
+ul.list li::before{content:"";position:absolute;left:3px;top:.62em;width:6px;height:6px;border-radius:50%;
+  background:var(--brass);box-shadow:0 0 8px rgba(242,180,65,.6)}
+ol.list{list-style:none;counter-reset:n;margin:12px 0 0;display:grid;gap:12px}
+ol.list li{counter-increment:n;position:relative;padding-left:38px;color:var(--muted);font-size:15px;line-height:1.7}
+ol.list li::before{content:counter(n,decimal-leading-zero);position:absolute;left:0;top:.1em;
+  font-family:var(--fm);font-size:11px;font-weight:600;color:var(--brass);
+  width:26px;height:26px;display:grid;place-items:center;border-radius:8px;
+  background:rgba(242,180,65,.10);border:1px solid rgba(242,180,65,.24)}
+.cols-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.cols-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+
+/* notes */
+.note{--c:var(--brass);position:relative;padding:16px 20px 16px 22px;border-radius:var(--r-m);
+  background:color-mix(in srgb,var(--c) 8%,transparent);border:1px solid color-mix(in srgb,var(--c) 20%,transparent);
+  color:var(--muted);font-size:14.6px;line-height:1.72;margin-top:16px;overflow:hidden}
+.note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c);
+  box-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
+.note strong{color:color-mix(in srgb,var(--c) 78%,var(--ivory))}
+.note--teal{--c:var(--teal)} .note--rose{--c:var(--rose)} .note--violet{--c:var(--violet)}
+.note__t{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:10.5px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--c);margin-bottom:8px}
+.note__t .ic{width:15px;height:15px}
+
+/* formula */
+.formula{position:relative;margin-top:20px;padding:24px 26px;border-radius:var(--r-m);overflow:hidden;
+  background:linear-gradient(160deg,rgba(4,6,14,.86),rgba(11,16,32,.7));
+  border:1px solid rgba(143,128,240,.24);text-align:center}
+.formula::before{content:"";position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(to right,rgba(143,128,240,.13) 1px,transparent 1px),linear-gradient(to bottom,rgba(143,128,240,.13) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-mask-image:radial-gradient(80% 90% at 50% 50%,#000,transparent);mask-image:radial-gradient(80% 90% at 50% 50%,#000,transparent)}
+.formula__k{position:relative;font-family:var(--fm);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim)}
+.formula__eq{position:relative;font-family:var(--fd);font-variation-settings:"opsz" 90;font-weight:400;
+  font-size:clamp(1.6rem,4.4vw,2.5rem);letter-spacing:-.01em;color:var(--ivory);margin:12px 0 0;line-height:1.2}
+.formula__eq b{color:var(--brass-hi);font-weight:500}
+.formula__eq sup,.formula__eq sub{font-size:.55em}
+.formula__key{position:relative;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-top:16px;
+  padding-top:15px;border-top:1px solid var(--line);font-size:12.4px;color:var(--dim)}
+.formula__key span{display:inline-flex;align-items:baseline;gap:6px}
+.formula__key b{font-family:var(--fm);color:var(--violet);font-weight:600;font-size:12.5px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 22px;border-radius:99px;
+  border:1px solid var(--line-2);background:var(--raise);color:var(--ivory);font-size:14px;font-weight:600;
+  cursor:pointer;letter-spacing:.01em;white-space:nowrap;
+  transition:transform .22s var(--out),box-shadow .22s var(--ease),background .22s,border-color .22s,color .22s,opacity .2s}
+.btn .ic{width:17px;height:17px}
+.btn:hover{transform:translateY(-2px);border-color:var(--line-3)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn--primary{background:linear-gradient(160deg,var(--brass-hi),var(--brass) 52%,#dfa02a);border-color:rgba(255,217,138,.5);color:#1a1204;box-shadow:var(--glow-brass)}
+.btn--primary:hover{box-shadow:0 0 0 1px rgba(242,180,65,.5),0 20px 50px -14px rgba(242,180,65,.6)}
+.btn--teal{background:linear-gradient(160deg,#8ff0de,var(--teal) 52%,#22b39c);border-color:rgba(165,243,252,.44);color:#04211d;box-shadow:var(--glow-teal)}
+.btn--danger{background:linear-gradient(160deg,#ff9db4,var(--rose) 55%,#d84f70);border-color:rgba(255,194,209,.4);color:#2a0710}
+.btn--ghost{background:color-mix(in srgb,var(--panel) 60%,transparent);border-color:var(--line-2);color:var(--muted)}
+.btn--ghost:hover{color:var(--ivory);background:var(--raise)}
+.btn--sm{padding:8px 16px;font-size:13px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* controls */
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:16px;margin-top:22px;
+  padding:20px;border-radius:var(--r-m);background:rgba(4,6,14,.42);border:1px solid var(--line)}
+.ctl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.ctl__lbl{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:10px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.ctl__lbl .ic{width:14px;height:14px;color:var(--brass);opacity:.8}
+.ctl__val{margin-left:auto;color:var(--brass-hi);font-weight:600;letter-spacing:0;font-size:11px}
+.ctl select{appearance:none;-webkit-appearance:none;width:100%;padding:10px 36px 10px 13px;border-radius:10px;
+  background-color:var(--panel-2);border:1px solid var(--line-2);color:var(--ivory);font-size:13.6px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3acc6' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;background-size:15px;
+  transition:border-color .2s,box-shadow .2s}
+.ctl select:hover{border-color:var(--line-3)}
+.ctl select:focus-visible{outline:none;border-color:var(--brass);box-shadow:0 0 0 3px rgba(242,180,65,.16)}
+.ctl select option{background:#0f1528;color:var(--ivory)}
+input[type=range]{appearance:none;-webkit-appearance:none;width:100%;height:26px;background:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:99px;
+  background:linear-gradient(90deg,var(--brass) 0 var(--pct,50%),rgba(241,238,228,.13) var(--pct,50%) 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;margin-top:-6px;
+  background:radial-gradient(circle at 34% 30%,#fff2d4,var(--brass) 55%,#a06f14);border:1px solid rgba(255,217,138,.65);
+  box-shadow:0 2px 10px rgba(0,0,0,.6),0 0 0 0 rgba(242,180,65,.35);transition:box-shadow .2s,transform .2s}
+input[type=range]:hover::-webkit-slider-thumb{transform:scale(1.12);box-shadow:0 2px 10px rgba(0,0,0,.6),0 0 0 6px rgba(242,180,65,.16)}
+input[type=range]::-moz-range-track{height:5px;border-radius:99px;background:rgba(241,238,228,.13)}
+input[type=range]::-moz-range-progress{height:5px;border-radius:99px;background:var(--brass)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;border:1px solid rgba(255,217,138,.65);
+  background:radial-gradient(circle at 34% 30%,#fff2d4,var(--brass) 55%,#a06f14)}
+input[type=range]:focus-visible{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(242,180,65,.35)}
+
+.seg{display:flex;gap:4px;padding:4px;border-radius:11px;background:rgba(4,6,14,.55);border:1px solid var(--line)}
+.seg button{flex:1;padding:8px 10px;border:0;border-radius:8px;background:none;color:var(--dim);font-size:12.8px;
+  font-weight:600;cursor:pointer;transition:color .22s,background .22s,box-shadow .22s;white-space:nowrap}
+.seg button:hover{color:var(--muted)}
+.seg button[aria-pressed="true"]{background:linear-gradient(160deg,rgba(78,224,200,.24),rgba(78,224,200,.10));
+  color:var(--teal);box-shadow:inset 0 0 0 1px rgba(78,224,200,.34)}
+
+/* stage */
+.stage{position:relative;margin-top:20px;border-radius:var(--r-m);overflow:hidden;
+  border:1px solid var(--line-2);background:#03050d;box-shadow:var(--sh-2)}
+.stage::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.75)}
+.stage canvas{width:100%;height:auto;display:block}
+.stage__tag{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 12px;
+  border-radius:99px;background:rgba(4,6,14,.72);backdrop-filter:blur(8px);border:1px solid var(--line-2);
+  font-family:var(--fm);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);z-index:2}
+.stage__tag .sw{width:9px;height:9px;border-radius:50%;background:var(--pc,var(--brass));box-shadow:0 0 10px var(--pc,var(--brass))}
+.stage__live{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;padding:6px 12px;
+  border-radius:99px;background:rgba(4,6,14,.72);backdrop-filter:blur(8px);border:1px solid var(--line-2);
+  font-family:var(--fm);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);z-index:2;
+  opacity:0;transition:opacity .3s}
+.stage__live.on{opacity:1;color:var(--rose)}
+.stage__live .rec{width:8px;height:8px;border-radius:50%;background:currentColor}
+.stage__live.on .rec{animation:blink 1.1s ease-out infinite}
+.stage__empty{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;
+  text-align:center;padding:24px;z-index:1;transition:opacity .4s}
+.stage__empty .ic{width:34px;height:34px;color:var(--faint);stroke-width:1.2}
+.stage__empty p{font-family:var(--fm);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.stage.is-run .stage__empty{opacity:0;pointer-events:none}
+.stage__cap{text-align:center;font-size:12.8px;color:var(--dim);margin-top:10px}
+
+/* telemetry */
+.telemetry{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;margin-top:18px;
+  background:var(--line);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.tel{--tc:var(--brass);position:relative;padding:15px 16px;background:rgba(9,13,26,.92);transition:background .25s}
+.tel:hover{background:rgba(15,21,40,.95)}
+.tel.is-hot::after{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--tc);box-shadow:0 0 12px var(--tc)}
+.tel__k{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:9.5px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.tel__k .ic{width:13px;height:13px;color:var(--tc);opacity:.85}
+.tel__v{font-family:var(--fm);font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--ivory);line-height:1;
+  font-variant-numeric:tabular-nums}
+.tel__v small{font-size:11px;font-weight:400;color:var(--dim);margin-left:5px;letter-spacing:.06em}
+
+/* result banner */
+.result{margin-top:18px;border-radius:var(--r-m);overflow:hidden;border:1px solid rgba(78,224,200,.28);
+  background:linear-gradient(150deg,rgba(78,224,200,.13),rgba(11,16,32,.6));
+  max-height:0;opacity:0;transition:max-height .55s var(--out),opacity .4s,margin .4s}
+.result.is-on{max-height:420px;opacity:1}
+.result__h{display:flex;align-items:center;gap:9px;padding:13px 18px;border-bottom:1px solid rgba(78,224,200,.18);
+  font-family:var(--fm);font-size:10.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+.result__h .ic{width:16px;height:16px}
+.result__b{padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+.result__b>div b{display:block;font-family:var(--fm);font-size:19px;font-weight:600;color:var(--ivory);font-variant-numeric:tabular-nums}
+.result__b>div i{display:block;font-style:normal;font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.5}
+
+/* spheres + planet grid */
+.sphere{position:relative;width:100%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 32% 28%, var(--c1), var(--c2) 46%, var(--c3) 100%);
+  box-shadow:inset -6px -8px 20px rgba(0,0,0,.62), 0 0 26px -4px var(--gl,rgba(255,255,255,.25))}
+.sphere::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 70% 76%, rgba(255,255,255,.16), transparent 52%)}
+.sphere--ring::before{content:"";position:absolute;top:50%;left:50%;width:186%;height:52%;
+  translate:-50% -50%;rotate:var(--rot,-22deg);border-radius:50%;
+  border:var(--bw,3px) solid var(--rc,rgba(242,180,65,.55));
+  box-shadow:0 0 12px -2px var(--rc,rgba(242,180,65,.4))}
+
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:14px;margin-top:20px}
+.pcard{position:relative;display:flex;flex-direction:column;align-items:center;gap:11px;padding:20px 14px 16px;
+  border-radius:var(--r-m);background:linear-gradient(170deg,rgba(15,21,40,.85),rgba(9,13,26,.7));
+  border:1px solid var(--line);cursor:pointer;overflow:hidden;
+  transition:transform .3s var(--out),border-color .3s,box-shadow .3s,background .3s}
+.pcard::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(70% 50% at 50% 0%, var(--gl,rgba(255,255,255,.10)), transparent 70%);opacity:0;transition:opacity .3s}
+.pcard:hover{transform:translateY(-4px);border-color:var(--line-2)}
+.pcard:hover::after{opacity:1}
+.pcard[aria-pressed="true"]{border-color:color-mix(in srgb,var(--pc) 55%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--pc) 40%,transparent),0 22px 46px -22px var(--pc);transform:translateY(-4px)}
+.pcard[aria-pressed="true"]::after{opacity:1}
+.pcard__sph{width:58px;height:58px;position:relative}
+.pcard__n{font-family:var(--fd);font-variation-settings:"opsz" 24;font-weight:500;font-size:16px;color:var(--ivory);letter-spacing:-.01em}
+.pcard__g{font-family:var(--fm);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.pcard__g b{color:var(--pc,var(--brass));font-weight:600;font-size:14px}
+.meter{width:100%;height:3px;border-radius:99px;background:rgba(241,238,228,.10);overflow:hidden}
+.meter>i{display:block;height:100%;border-radius:99px;background:var(--pc,var(--brass));
+  box-shadow:0 0 10px var(--pc,var(--brass));width:0;transition:width .8s var(--out)}
+.pcard__badge{position:absolute;top:9px;right:9px;font-family:var(--fm);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;padding:3px 7px;border-radius:99px;background:rgba(4,6,14,.7);
+  border:1px solid var(--line-2);color:var(--dim)}
+
+/* weight bars */
+.bars{display:grid;gap:9px;margin-top:16px}
+.bar{display:grid;grid-template-columns:98px 1fr 78px;align-items:center;gap:12px;padding:7px 10px;border-radius:10px;
+  transition:background .25s}
+.bar.is-sel{background:rgba(242,180,65,.07);box-shadow:inset 0 0 0 1px rgba(242,180,65,.2)}
+.bar__n{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px;min-width:0}
+.bar__n .sw{width:9px;height:9px;border-radius:50%;flex:none;background:var(--pc);box-shadow:0 0 8px var(--pc)}
+.bar__n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar__t{height:9px;border-radius:99px;background:rgba(241,238,228,.07);overflow:hidden}
+.bar__t>i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--pc) 55%,#000),var(--pc));
+  box-shadow:0 0 12px -2px var(--pc);transition:width .9s var(--out)}
+.bar__v{font-family:var(--fm);font-size:12.5px;color:var(--ivory);text-align:right;font-variant-numeric:tabular-nums}
+
+/* data table */
+.scroll-x{overflow-x:auto;border-radius:var(--r-m);border:1px solid var(--line);margin-top:16px}
+table.dt{width:100%;border-collapse:collapse;font-size:13.4px;min-width:520px}
+table.dt caption{text-align:left;padding:13px 16px;font-family:var(--fm);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--dim);background:rgba(4,6,14,.5);border-bottom:1px solid var(--line)}
+table.dt th{padding:12px 16px;text-align:left;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brass);background:rgba(242,180,65,.06);border-bottom:1px solid var(--line);white-space:nowrap}
+table.dt th:not(:first-child),table.dt td:not(:first-child){text-align:right}
+table.dt td{padding:11px 16px;border-bottom:1px solid rgba(241,238,228,.055);color:var(--muted);font-variant-numeric:tabular-nums}
+table.dt tbody tr{transition:background .2s}
+table.dt tbody tr:hover{background:rgba(241,238,228,.035)}
+table.dt tbody tr.is-sel{background:rgba(242,180,65,.09);box-shadow:inset 2px 0 0 var(--brass)}
+table.dt tbody tr.is-sel td{color:var(--ivory)}
+table.dt tbody tr:last-child td{border-bottom:0}
+table.dt td:first-child{color:var(--ivory);font-weight:500}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;vertical-align:middle;
+  background:var(--pc);box-shadow:0 0 8px var(--pc)}
+/* ═══════════════ QUIZ ═══════════════ */
+.quiz{max-width:720px;margin-inline:auto}
+.quiz__top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.quiz__count{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.quiz__count b{color:var(--brass-hi);font-size:13px}
+.quiz__score{display:flex;align-items:center;gap:7px;font-family:var(--fm);font-size:12px;color:var(--teal);
+  padding:5px 12px;border-radius:99px;background:rgba(78,224,200,.09);border:1px solid rgba(78,224,200,.24)}
+.quiz__score .ic{width:14px;height:14px}
+.quiz__prog{display:flex;gap:5px;margin-bottom:26px}
+.quiz__prog i{flex:1;height:4px;border-radius:99px;background:rgba(241,238,228,.10);transition:background .4s var(--ease),box-shadow .4s}
+.quiz__prog i.ok{background:var(--teal);box-shadow:0 0 10px rgba(78,224,200,.5)}
+.quiz__prog i.no{background:rgba(255,122,156,.6)}
+.quiz__prog i.cur{background:var(--brass);box-shadow:0 0 12px rgba(242,180,65,.7);animation:pulse 1.8s ease-in-out infinite}
+.quiz__q{font-family:var(--fd);font-variation-settings:"opsz" 40;font-weight:400;font-size:clamp(1.25rem,2.4vw,1.65rem);
+  line-height:1.32;letter-spacing:-.018em;color:var(--ivory);margin-bottom:22px}
+.quiz__opts{display:grid;gap:10px}
+.opt{position:relative;display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:var(--r-m);
+  background:linear-gradient(160deg,rgba(15,21,40,.75),rgba(9,13,26,.6));border:1px solid var(--line);
+  color:var(--muted);font-size:14.8px;line-height:1.5;text-align:left;cursor:pointer;width:100%;
+  transition:transform .24s var(--out),border-color .24s,color .24s,background .24s,box-shadow .24s}
+.opt__k{flex:none;width:28px;height:28px;display:grid;place-items:center;border-radius:9px;
+  font-family:var(--fm);font-size:12px;font-weight:600;color:var(--dim);
+  background:rgba(241,238,228,.055);border:1px solid var(--line);transition:all .24s}
+.opt:hover:not(:disabled){transform:translateX(4px);border-color:rgba(143,128,240,.4);color:var(--ivory)}
+.opt:hover:not(:disabled) .opt__k{color:var(--violet);border-color:rgba(143,128,240,.4);background:rgba(143,128,240,.12)}
+.opt:disabled{cursor:default}
+.opt.ok{border-color:rgba(78,224,200,.5);background:rgba(78,224,200,.11);color:var(--ivory);box-shadow:0 0 0 1px rgba(78,224,200,.22)}
+.opt.ok .opt__k{background:var(--teal);border-color:var(--teal);color:#04211d}
+.opt.bad{border-color:rgba(255,122,156,.5);background:rgba(255,122,156,.10);color:var(--ivory)}
+.opt.bad .opt__k{background:var(--rose);border-color:var(--rose);color:#2a0710}
+.opt.dim{opacity:.42}
+.quiz__fb{margin-top:16px;padding:16px 18px;border-radius:var(--r-m);font-size:14.4px;line-height:1.72;
+  display:none;align-items:flex-start;gap:12px;color:var(--muted)}
+.quiz__fb.show{display:flex;animation:panelIn .4s var(--out) both}
+.quiz__fb .ic{width:19px;height:19px;flex:none;margin-top:2px}
+.quiz__fb.ok{background:rgba(78,224,200,.09);border:1px solid rgba(78,224,200,.26)}
+.quiz__fb.ok .ic{color:var(--teal)}
+.quiz__fb.bad{background:rgba(255,122,156,.09);border:1px solid rgba(255,122,156,.26)}
+.quiz__fb.bad .ic{color:var(--rose)}
+.quiz__nav{display:flex;justify-content:flex-end;margin-top:20px}
+
+.score{text-align:center;padding:14px 0 4px}
+.score__ring{position:relative;width:190px;height:190px;margin:0 auto 22px}
+.score__ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score__ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+.score__bgc{stroke:rgba(241,238,228,.08)}
+.score__fgc{stroke:url(#gg);stroke-dasharray:534;stroke-dashoffset:534;transition:stroke-dashoffset 1.5s var(--out)}
+.score__num{position:absolute;inset:0;display:grid;place-content:center;gap:2px}
+.score__num b{font-family:var(--fd);font-variation-settings:"opsz" 90;font-weight:500;font-size:52px;line-height:1;
+  letter-spacing:-.03em;color:var(--ivory)}
+.score__num i{font-style:normal;font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.score h3{font-family:var(--fd);font-variation-settings:"opsz" 40;font-weight:500;font-size:1.6rem;color:var(--ivory);letter-spacing:-.02em}
+.score p{max-width:46ch;margin:12px auto 0;color:var(--muted);font-size:15px;line-height:1.75}
+.score__rev{text-align:left;margin-top:26px;border-top:1px solid var(--line);padding-top:20px;display:grid;gap:10px}
+.rev{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:11px;background:rgba(4,6,14,.4);border:1px solid var(--line)}
+.rev .ic{width:16px;height:16px;flex:none;margin-top:3px}
+.rev.ok .ic{color:var(--teal)} .rev.bad .ic{color:var(--rose)}
+.rev b{display:block;font-size:13.6px;color:var(--ivory);font-weight:500;line-height:1.5}
+.rev span{display:block;font-size:12.4px;color:var(--dim);margin-top:4px;line-height:1.6}
+
+/* ═══════════════ EXPERIMENTS ═══════════════ */
+.exp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:26px;align-items:start;margin-top:22px}
+.exp__viz{display:flex;flex-direction:column;gap:12px}
+.exp__viz .stage{margin-top:0;background:#050816}
+.exp__viz .stage canvas{margin-inline:auto}
+.exp__body{min-width:0}
+.mat{margin-top:16px;padding:16px 18px;border-radius:var(--r-m);background:rgba(4,6,14,.44);border:1px solid var(--line)}
+.mat+.mat{margin-top:12px}
+.mat__h{display:flex;align-items:center;gap:9px;font-family:var(--fm);font-size:10.5px;font-weight:600;
+  letter-spacing:.17em;text-transform:uppercase;margin-bottom:11px}
+.mat__h .ic{width:16px;height:16px}
+.mat--teal .mat__h{color:var(--teal)} .mat--teal .ic{color:var(--teal)}
+.mat--brass .mat__h{color:var(--brass)} .mat--brass .ic{color:var(--brass)}
+.mat--violet .mat__h{color:var(--violet)} .mat--violet .ic{color:var(--violet)}
+.mat p.body{font-size:14.6px}
+.expnum{position:absolute;top:22px;right:26px;font-family:var(--fd);font-variation-settings:"opsz" 110;font-weight:300;
+  font-size:74px;line-height:.8;color:rgba(241,238,228,.055);letter-spacing:-.04em;pointer-events:none;user-select:none}
+
+/* ═══════════════ DOCUMENT / RESEARCH ═══════════════ */
+.doc{display:grid;grid-template-columns:236px minmax(0,1fr);gap:44px;align-items:start}
+.doc__toc{position:sticky;top:88px;max-height:calc(100vh - 120px);overflow-y:auto;scrollbar-width:thin;padding-right:8px}
+.doc__toc h4{font-family:var(--fm);font-size:9.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:14px;padding-left:14px}
+.doc__toc ol{list-style:none;display:grid;gap:1px;border-left:1px solid var(--line)}
+.doc__toc a{display:block;padding:7px 14px;border:0;border-left:2px solid transparent;margin-left:-1px;
+  font-size:13px;line-height:1.45;color:var(--dim);transition:color .25s,border-color .25s,background .25s}
+.doc__toc a:hover{color:var(--ivory);background:rgba(241,238,228,.035)}
+.doc__toc a.on{color:var(--brass-hi);border-left-color:var(--brass);background:linear-gradient(90deg,rgba(242,180,65,.10),transparent)}
+.doc__body{min-width:0}
+.docsec{scroll-margin-top:96px;padding:30px 0;border-bottom:1px solid var(--line)}
+.docsec:first-child{padding-top:4px}
+.docsec:last-child{border-bottom:0}
+.docsec>h3{font-family:var(--fd);font-variation-settings:"opsz" 60;font-weight:500;font-size:clamp(1.4rem,2.4vw,1.85rem);
+  line-height:1.2;letter-spacing:-.024em;color:var(--ivory);margin-bottom:6px;display:flex;align-items:baseline;gap:13px}
+.docsec>h3 .n{font-family:var(--fm);font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--brass);flex:none;translate:0 -3px}
+.docsec>.lede{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.docsec p.body{font-size:15.4px}
+.docsec h4.sub{margin-top:24px}
+.docgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:16px}
+.mini{padding:16px 18px;border-radius:var(--r-m);background:rgba(4,6,14,.42);border:1px solid var(--line);
+  transition:border-color .3s,transform .3s var(--out),background .3s}
+.mini:hover{border-color:var(--line-2);transform:translateY(-2px);background:rgba(15,21,40,.6)}
+.mini b{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-variation-settings:"opsz" 24;
+  font-weight:600;font-size:15px;color:var(--ivory);margin-bottom:7px}
+.mini b .ic{width:16px;height:16px;color:var(--brass)}
+.mini p{font-size:13.8px;line-height:1.68;color:var(--dim)}
+.mini--teal b .ic{color:var(--teal)} .mini--violet b .ic{color:var(--violet)} .mini--rose b .ic{color:var(--rose)}
+.ods{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+.ods__i{position:relative;padding:18px;border-radius:var(--r-m);overflow:hidden;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--oc) 15%,transparent),rgba(9,13,26,.6));
+  border:1px solid color-mix(in srgb,var(--oc) 30%,transparent)}
+.ods__i b{display:block;font-family:var(--fd);font-variation-settings:"opsz" 60;font-weight:600;font-size:26px;
+  color:var(--oc);line-height:1;letter-spacing:-.02em}
+.ods__i span{display:block;font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:8px 0 9px}
+.ods__i p{font-size:13.4px;line-height:1.65;color:var(--dim)}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-top:16px}
+.who{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:var(--r-m);
+  background:rgba(4,6,14,.42);border:1px solid var(--line);transition:transform .3s var(--out),border-color .3s}
+.who:hover{transform:translateY(-3px);border-color:rgba(242,180,65,.32)}
+.who__av{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--fd);font-weight:600;font-size:15px;color:#1a1204;
+  background:linear-gradient(150deg,var(--brass-hi),var(--brass) 55%,#dfa02a);box-shadow:0 6px 18px -6px rgba(242,180,65,.7)}
+.who__n{font-size:14.4px;color:var(--ivory);font-weight:500;line-height:1.3}
+.who__r{font-family:var(--fm);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.refs{list-style:none;display:grid;gap:12px;margin-top:16px;counter-reset:r}
+.refs li{counter-increment:r;position:relative;padding:15px 18px 15px 52px;border-radius:var(--r-m);
+  background:rgba(4,6,14,.42);border:1px solid var(--line);font-size:14px;line-height:1.7;color:var(--muted)}
+.refs li::before{content:counter(r,decimal-leading-zero);position:absolute;left:16px;top:15px;
+  font-family:var(--fm);font-size:11px;font-weight:600;color:var(--brass)}
+.refs .tag{display:inline-block;font-family:var(--fm);font-size:9px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;padding:3px 8px;border-radius:99px;margin-bottom:8px;
+  background:rgba(242,180,65,.12);border:1px solid rgba(242,180,65,.26);color:var(--brass-hi)}
+.refs em{color:var(--ivory);font-style:italic}
+.refs .url{font-family:var(--fm);font-size:12.2px;color:var(--dim);word-break:break-all;border:0}
+.dochead{padding:26px 28px;border-radius:var(--r-l);margin-bottom:26px;position:relative;overflow:hidden;
+  background:linear-gradient(150deg,rgba(143,128,240,.14),rgba(9,13,26,.7) 55%,rgba(242,180,65,.08));
+  border:1px solid rgba(143,128,240,.24)}
+.dochead::before{content:"";position:absolute;inset:0;opacity:.4;
+  background-image:linear-gradient(to right,rgba(143,128,240,.14) 1px,transparent 1px),linear-gradient(to bottom,rgba(143,128,240,.14) 1px,transparent 1px);
+  background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(90% 100% at 20% 0%,#000,transparent);mask-image:radial-gradient(90% 100% at 20% 0%,#000,transparent)}
+.dochead>*{position:relative}
+.dochead .k{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--violet)}
+.dochead h2{font-family:var(--fd);font-variation-settings:"opsz" 110;font-weight:400;font-size:clamp(1.8rem,4vw,2.7rem);
+  line-height:1.1;letter-spacing:-.03em;color:var(--ivory);margin:12px 0 0}
+.dochead h2 em{font-style:italic;font-weight:600;color:var(--brass-hi)}
+.dochead .sub{font-size:15px;color:var(--muted);margin-top:14px;max-width:60ch}
+.dochead .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:99px;font-family:var(--fm);
+  font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
+  background:rgba(4,6,14,.55);border:1px solid var(--line-2)}
+.chip .ic{width:13px;height:13px;color:var(--brass)}
+
+/* ═══════════════ FOOTER ═══════════════ */
+.foot{position:relative;z-index:1;margin-top:44px;border-top:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(7,11,24,.55),rgba(4,6,14,.9))}
+.foot__in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:36px;padding:40px 22px 30px}
+.foot__brand .brand__txt b{font-size:19px}
+.foot__brand p{font-size:13.4px;color:var(--dim);margin-top:14px;line-height:1.7}
+.foot__meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px}
+.foot__meta>div span{display:block;font-family:var(--fm);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.foot__meta>div b{display:block;font-size:13.6px;font-weight:500;color:var(--muted);line-height:1.6}
+.foot__bot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 22px 30px;
+  border-top:1px solid var(--line);font-size:12.2px;color:var(--faint)}
+.foot__bot .fm{font-family:var(--fm);color:var(--dim)}
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media (max-width:1080px){
+  .hero{grid-template-columns:1fr;gap:36px;padding:48px 22px 36px}
+  .orrery-wrap{order:-1;min-height:0}
+  .orrery{width:min(74%,300px)}
+  .hero__lead{max-width:62ch}
+  .doc{grid-template-columns:1fr;gap:26px}
+  .doc__toc{position:static;max-height:none;order:-1;padding:0 0 4px}
+  .doc__toc ol{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));display:grid;gap:0;border-left:0;border-top:1px solid var(--line)}
+  .doc__toc a{border-left:0;border-top:2px solid transparent;margin-left:0;margin-top:-1px}
+  .doc__toc a.on{border-left-color:transparent;border-top-color:var(--brass);background:linear-gradient(180deg,rgba(242,180,65,.10),transparent)}
+  .exp{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .topbar__in{flex-wrap:wrap;gap:12px;min-height:0;padding-block:12px}
+  .brand{order:1} .gchip{order:2;margin-left:auto} .nav{order:3;flex:1 0 100%}
+  .card{padding:22px 20px;border-radius:18px}
+  .cols-2,.cols-3{grid-template-columns:1fr}
+  .foot__in{grid-template-columns:1fr;gap:26px;padding:32px 22px 24px}
+  .hero__stats{grid-template-columns:repeat(2,1fr)}
+  .expnum{font-size:56px;top:16px;right:18px}
+}
+@media (max-width:520px){
+  body{font-size:15px}
+  .wrap{padding-inline:16px}
+  .hero{padding:34px 16px 26px}
+  .hero__stats{grid-template-columns:1fr 1fr}
+  .controls{grid-template-columns:1fr;padding:16px}
+  .card{padding:20px 16px}
+  .bar{grid-template-columns:78px 1fr 64px;gap:9px;padding:6px 8px}
+  .tab{padding:8px 12px;font-size:13px}
+  .tab .tl{display:none}
+  .tab .ic{width:19px;height:19px}
+  .gchip__t i{display:none}
+  .foot__bot{flex-direction:column;gap:6px}
+  .formula{padding:20px 16px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+  .rv{opacity:1;transform:none}
+  .bg--nebula{animation:none}
+}
+</style>
+</head>
+<body data-view="intro">
+
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<div class="bg" aria-hidden="true">
+  <div class="bg--sky"></div>
+  <div class="bg--nebula"></div>
+  <div class="bg--stars"><canvas id="skyCanvas"></canvas></div>
+  <div class="bg--grid"></div>
+  <div class="bg--grain"></div>
+</div>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 8.4 4.2 6 4.2H3v13.6h3c2.4 0 4.5.8 6 2.3 1.5-1.5 3.6-2.3 6-2.3h3V4.2h-3c-2.4 0-4.5.8-6 2.3z"/><path d="M12 6.5v13.6"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M12 2.5c3.2 2.4 5 6.2 5 10.2 0 2.3-.5 4.4-1.4 6.3H8.4C7.5 17.1 7 15 7 12.7c0-4 1.8-7.8 5-10.2z"/><circle cx="12" cy="10" r="2"/><path d="M8.4 19c-1.5.6-2.6 1.7-3.2 3 1.4-.3 2.7-.4 4-.2M15.6 19c1.5.6 2.6 1.7 3.2 3-1.4-.3-2.7-.4-4-.2"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.5 21V3.6"/><path d="M5.5 4.4h10l-1.6 3.6 1.6 3.6h-10"/></symbol>
+  <symbol id="i-planet" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.2"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-24 12 12)"/></symbol>
+  <symbol id="i-quiz" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.7.3-1 .9-1 1.7v.4"/><circle cx="12" cy="17.1" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9.5 3h5M10.5 3v6.2L5.4 18.1A2 2 0 0 0 7.1 21h9.8a2 2 0 0 0 1.7-2.9L13.5 9.2V3"/><path d="M7.6 15.2h8.8"/></symbol>
+  <symbol id="i-micro" viewBox="0 0 24 24"><path d="M6.5 21h12"/><path d="M10 21a6 6 0 0 0 6.5-6c0-1.2-.3-2.3-.8-3.3"/><path d="m10.2 3.2 3.8 1.8-3.4 7.2-3.8-1.8z"/><path d="M7.6 12.8h4.6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4 19 12 8 18.6z" fill="currentColor"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20.2 3.6v4.8h-4.8"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.6" y="10.4" width="14.8" height="10.2" rx="2.6"/><path d="M8 10.4V7.8a4 4 0 0 1 8 0v2.6"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4.6" y="10.4" width="14.8" height="10.2" rx="2.6"/><path d="M8 10.4V7.8a4 4 0 0 1 7.7-1.4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15"/><path d="m13.4 6.4 6 5.6-6 5.6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.6 12.6 4.9 4.9 9.9-11"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.2 6.2 17.8 17.8M17.8 6.2 6.2 17.8"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.8 21.3 20H2.7z"/><path d="M12 9.6v4.5"/><circle cx="12" cy="17" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11.2v5.4"/><circle cx="12" cy="7.9" r=".95" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.2 17.6h5.6M10.2 20.8h3.6"/><path d="M12 3a6 6 0 0 0-3.4 10.9c.6.5.9 1.1.9 1.8v.6h5v-.6c0-.7.3-1.3.9-1.8A6 6 0 0 0 12 3z"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2.4" y="8" width="19.2" height="8" rx="1.7"/><path d="M6.4 8v3M10 8v4.6M13.6 8v3M17.2 8v4.6"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4.2V20M6.6 20h10.8M4 8.2h16"/><path d="M4 8.2 1.6 14.2h4.8zM20 8.2l-2.4 6h4.8z"/><circle cx="12" cy="3.4" r="1.2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.8"/><path d="M12 6.9v5.5l3.5 2.1"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13.6 2.4 5.2 13.4h5.4L9.9 21.6 18.8 10h-5.7z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v14.4"/><path d="m6.4 12.8 5.6 6 5.6-6"/></symbol>
+  <symbol id="i-path" viewBox="0 0 24 24"><path d="M3.4 20.2c4-1 7-4 9.4-8s4.6-7.6 8.2-8"/><circle cx="3.4" cy="20.2" r="1.7"/><circle cx="20.8" cy="4.2" r="1.7"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3.4 8.8 4.6L12 12.6 3.2 8z"/><path d="m3.2 12.6 8.8 4.6 8.8-4.6"/><path d="m3.2 16.8 8.8 4.6 8.8-4.6"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 3.6v16.8h16.4"/><path d="M8 20.4v-6M12.4 20.4V8M16.8 20.4v-9"/></symbol>
+  <symbol id="i-atom" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="9.6" ry="4"/><ellipse cx="12" cy="12" rx="9.6" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.6" ry="4" transform="rotate(120 12 12)"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.9 20c.6-3.4 3.1-5.4 6.1-5.4s5.5 2 6.1 5.4"/><path d="M16.2 5.2a3.4 3.4 0 0 1 0 6.4M17.7 14.9c2 .6 3.3 2.4 3.7 5.1"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 2.8h7.6L19 8.3V21.2H6z"/><path d="M13.4 2.9v5.5h5.4"/><path d="M9 13h6.6M9 16.6h6.6"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.2 9.4h17.6M3.2 14.6h17.6"/><path d="M12 3c2.6 2.6 3.9 5.7 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.7-3.9-9S9.4 5.6 12 3z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7.2 3.8h9.6v5a4.8 4.8 0 0 1-9.6 0z"/><path d="M7.2 5.2H4.4v1.8a3.8 3.8 0 0 0 3.4 3.8M16.8 5.2h2.8V7a3.8 3.8 0 0 1-3.4 3.8"/><path d="M12 13.6v3.6M8.6 20.4h6.8l-1-3.2H9.6z"/></symbol>
+  <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.2 3.8c-6.2 0-11.2 3.2-13.8 8.4L3.8 20.2"/><path d="M20.2 3.8c0 6.2-3.2 11.2-8.4 13.8"/><path d="M9 15.2h5.2M11.6 10.4h4.8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.6"/><path d="m15.9 15.9 4.9 4.9"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2.8 14 9.4l6.6 2-6.6 2-2 6.6-2-6.6-6.6-2 6.6-2z"/></symbol>
+  <symbol id="i-apple" viewBox="0 0 24 24"><path d="M12 7.8c-1-1.3-2.4-1.9-4.1-1.7C5.5 6.4 4 8.6 4 11.6c0 4 3.2 8.4 5.6 8.4 1 0 1.6-.5 2.4-.5s1.4.5 2.4.5c2.4 0 5.6-4.4 5.6-8.4 0-3-1.5-5.2-3.9-5.5-1.7-.2-3.1.4-4.1 1.7z"/><path d="M12 7.8c0-2.1 1-3.6 2.8-4.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.4 14.8A8.8 8.8 0 0 1 9.2 3.6a8.8 8.8 0 1 0 11.2 11.2z"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M4.4 19.6C3 14 6.4 5.6 19.8 4.2c1.2 10.4-5 16-11.4 15.2"/><path d="M4.4 19.6C8 15.4 12 12.4 17 10.4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10.4 13.6a4 4 0 0 0 5.9.4l2.8-2.8a4 4 0 0 0-5.6-5.6l-1.6 1.6"/><path d="M13.6 10.4a4 4 0 0 0-5.9-.4L4.9 12.8a4 4 0 0 0 5.6 5.6l1.6-1.6"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="topbar__in wrap">
+    <div class="brand">
+      <div class="brand__mark">
+        <svg viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <circle cx="18" cy="18" r="16.2" stroke="rgba(241,238,228,.14)"/>
+          <g class="brand__orbit">
+            <ellipse cx="18" cy="18" rx="15.4" ry="6.4" stroke="rgba(78,224,200,.55)" stroke-width="1.2" transform="rotate(-26 18 18)"/>
+            <circle cx="32" cy="12.4" r="2.1" fill="#4ee0c8"/>
+          </g>
+          <circle cx="18" cy="18" r="5.6" fill="url(#bg1)"/>
+          <defs><radialGradient id="bg1" cx=".34" cy=".3"><stop offset="0" stop-color="#fff3d6"/><stop offset=".5" stop-color="#f2b441"/><stop offset="1" stop-color="#8a5c10"/></radialGradient></defs>
+        </svg>
+      </div>
+      <span class="brand__txt"><b>ANDRÓMEDA</b><i>Campo gravitacional</i></span>
+    </div>
+
+    <nav class="nav" aria-label="Secciones del proyecto">
+      <div class="nav__sc" role="tablist" aria-label="Secciones">
+        <button class="tab" role="tab" id="tb-intro"   data-tab="intro"   aria-controls="tp-intro"   aria-selected="true"  tabindex="0"><span class="tab__pill"></span><svg class="ic"><use href="#i-book"/></svg><span class="tl">Gravedad</span></button>
+        <button class="tab" role="tab" id="tb-sim"     data-tab="sim"     aria-controls="tp-sim"     aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-rocket"/></svg><span class="tl">Simulador</span></button>
+        <button class="tab" role="tab" id="tb-race"    data-tab="race"    aria-controls="tp-race"    aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-flag"/></svg><span class="tl">Carrera</span></button>
+        <button class="tab" role="tab" id="tb-compare" data-tab="compare" aria-controls="tp-compare" aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-planet"/></svg><span class="tl">Planetas</span></button>
+        <button class="tab" role="tab" id="tb-quiz"    data-tab="quiz"    aria-controls="tp-quiz"    aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-quiz"/></svg><span class="tl">Quiz</span></button>
+        <button class="tab" role="tab" id="tb-exp"     data-tab="exp"     aria-controls="tp-exp"     aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-flask"/></svg><span class="tl">Experimentos</span></button>
+        <button class="tab" role="tab" id="tb-doc"     data-tab="doc"     aria-controls="tp-doc"     aria-selected="false" tabindex="-1"><span class="tab__pill"></span><svg class="ic"><use href="#i-micro"/></svg><span class="tl">Investigación</span></button>
+      </div>
+    </nav>
+
+    <div class="gchip" id="gchip" title="Gravedad del cuerpo seleccionado">
+      <span class="gchip__d"></span>
+      <span class="gchip__t"><b id="gchipVal">9.80</b><i id="gchipName">Tierra · m/s²</i></span>
+    </div>
+  </div>
+</header>
+
+<section class="hero wrap" id="hero">
+  <div class="hero__copy">
+    <span class="eyebrow"><span class="pulse"></span>Proyecto de investigación · Grupo #4</span>
+    <h1 class="hero__title">Campo<em>gravitacional</em></h1>
+    <div class="hero__rule"></div>
+    <p class="hero__lead">Entre <strong>masas y fuerza</strong>: una exploración interactiva de la gravedad. Lanza objetos en ocho cuerpos celestes, cronometra caídas, deforma el espacio-tiempo con una sábana elástica y lee el marco teórico completo del proyecto.</p>
+    <div class="hero__cta">
+      <button class="btn btn--primary" data-goto="sim"><svg class="ic"><use href="#i-rocket"/></svg>Abrir el simulador</button>
+      <button class="btn btn--ghost" data-goto="doc"><svg class="ic"><use href="#i-doc"/></svg>Ver la investigación</button>
+    </div>
+    <div class="hero__stats">
+      <div><b data-count="8">0</b><i>Cuerpos celestes</i></div>
+      <div><b data-count="3">0</b><i>Simuladores</i></div>
+      <div><b data-count="10">0</b><i>Preguntas de quiz</i></div>
+      <div><b data-count="9.81" data-dec="2">0</b><i>g en la Tierra</i></div>
+    </div>
+  </div>
+
+  <div class="orrery-wrap">
+    <div class="orrery" aria-hidden="true">
+      <div class="orrery__field">
+        <div class="ring ring--2"><span class="bodydot bodydot--c"></span></div>
+        <div class="ring ring--1"><span class="bodydot bodydot--b"></span></div>
+        <div class="ring ring--3"><span class="bodydot bodydot--a"></span></div>
+      </div>
+      <div class="orrery__star"></div>
+      <span class="orrery__cap">Sistema en órbita · tiempo real</span>
+    </div>
+  </div>
+</section>
+
+<main id="main" class="wrap">
+
+<!-- ══════════ INTRO ══════════ -->
+<section class="panel-wrap is-on" id="tp-intro" role="tabpanel" aria-labelledby="tb-intro" tabindex="0">
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico"><svg class="ic"><use href="#i-book"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">01 — Fundamentos</span><h2 class="blk">¿Qué es la gravedad?</h2></div>
+    </div>
+    <p class="body">La <strong class="acc-v">gravedad</strong> es la fuerza que tiene toda la materia para atraer a otros objetos. Es como un "imán invisible" que nos mantiene pegados a la Tierra y hace que las cosas caigan cuando las sueltas.</p>
+    <div class="formula">
+      <div class="formula__k">Ley de Gravitación Universal de Newton</div>
+      <div class="formula__eq">F = G × (m<sub>₁</sub> × m<sub>₂</sub>) / d<sup>2</sup></div>
+      <div class="formula__key">
+        <span><b>F</b> Fuerza gravitatoria</span>
+        <span><b>G</b> Constante universal</span>
+        <span><b>m₁, m₂</b> Masas</span>
+        <span><b>d</b> Distancia</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cols-2">
+    <div class="card rv">
+      <div class="sec-head">
+        <span class="sec-ico"><svg class="ic"><use href="#i-apple"/></svg></span>
+        <div class="sec-head__t"><span class="sec-num">Historia</span><h3 class="blk">Dato curioso</h3></div>
+      </div>
+      <p class="body">Según la leyenda, <strong class="acc-b">Isaac Newton</strong> se inspiró cuando vio caer una manzana de un árbol en 1666. Se preguntó: <em>"¿Por qué la manzana cae hacia abajo y no hacia los lados?"</em></p>
+      <div class="note note--teal">
+        <div class="note__t"><svg class="ic"><use href="#i-spark"/></svg>Para recordar</div>
+        En la Tierra, la gravedad hace que todos los objetos caigan a una aceleración de <strong>9.8 m/s²</strong>. ¡Eso significa que cada segundo que cae, va un poco más rápido!
+      </div>
+    </div>
+
+    <div class="card rv">
+      <div class="sec-head">
+        <span class="sec-ico sec-ico--teal"><svg class="ic"><use href="#i-globe"/></svg></span>
+        <div class="sec-head__t"><span class="sec-num">Comparativa</span><h3 class="blk">La gravedad en otros planetas</h3></div>
+      </div>
+      <p class="body">No todos los planetas tienen la misma gravedad. Depende de su <strong class="acc-v">masa</strong> y su <strong class="acc-v">tamaño</strong>. Un planeta más grande y pesado tiene más gravedad.</p>
+      <ul class="list">
+        <li>En la <strong>Luna</strong> pesarías 6 veces menos</li>
+        <li>En <strong>Júpiter</strong> pesarías casi 3 veces más</li>
+        <li>En <strong>Marte</strong> pesarías casi la mitad</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--violet"><svg class="ic"><use href="#i-scale"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">La gran pregunta</span><h3 class="blk">¿Los objetos pesados caen más rápido?</h3></div>
+    </div>
+    <p class="body">¡NO! En el vacío, todos los objetos caen a la misma velocidad sin importar su peso. <strong class="acc-t">Galileo Galilei</strong> demostró esto en el siglo XVI. Si soltamos una bola de boliche y una pluma en la Luna (donde no hay aire), ambas llegan al suelo al mismo tiempo.</p>
+    <div class="note">
+      <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>Dato curioso</div>
+      En la Tierra, una pluma cae más lento que una bola por el <strong>aire</strong> que la frena. ¡Pero si estuvieras en la Luna, caerían igual!
+    </div>
+    <div class="btn-row">
+      <button class="btn btn--teal btn--sm" data-goto="race"><svg class="ic"><use href="#i-flag"/></svg>Comprobarlo en la carrera</button>
+      <button class="btn btn--ghost btn--sm" data-goto="compare"><svg class="ic"><use href="#i-planet"/></svg>Comparar planetas</button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SIMULADOR ══════════ -->
+<section class="panel-wrap" id="tp-sim" role="tabpanel" aria-labelledby="tb-sim" tabindex="0" hidden>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico"><svg class="ic"><use href="#i-rocket"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">02 — Laboratorio virtual</span><h2 class="blk">Simulador de caída libre</h2></div>
+    </div>
+    <p class="body">Selecciona un planeta, un objeto y una altura. ¡Lanza y observa!</p>
+
+    <div class="controls">
+      <label class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-planet"/></svg>Planeta</span>
+        <select id="simPlanet"></select>
+      </label>
+      <label class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-layers"/></svg>Objeto</span>
+        <select id="simObject"></select>
+      </label>
+      <div class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-ruler"/></svg>Altura <span class="ctl__val"><span id="heightVal">50</span> m</span></span>
+        <input type="range" id="simHeight" min="10" max="150" value="50" step="5" aria-label="Altura de caída en metros">
+      </div>
+      <div class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-globe"/></svg>Atmósfera</span>
+        <div class="seg" id="simAir" role="group" aria-label="Resistencia del aire">
+          <button type="button" data-air="no" aria-pressed="true">Sin aire (vacío)</button>
+          <button type="button" data-air="si" aria-pressed="false">Con aire</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn--primary" id="simGo"><svg class="ic"><use href="#i-play"/></svg>Lanzar</button>
+      <button class="btn btn--ghost" id="simReset"><svg class="ic"><use href="#i-reset"/></svg>Reiniciar</button>
+    </div>
+
+    <div class="stage" id="simStage">
+      <div class="stage__tag"><span class="sw" id="simSw"></span><span id="simTag">Tierra</span> · <span id="simTagG">9.80 m/s²</span></div>
+      <div class="stage__live" id="simLive"><span class="rec"></span><span id="simLiveT">En caída</span></div>
+      <div class="stage__empty" id="simEmpty">
+        <svg class="ic"><use href="#i-down"/></svg>
+        <p>Pulsa «Lanzar» para soltar el objeto</p>
+      </div>
+      <canvas id="simCanvas" data-aspect="2"></canvas>
+    </div>
+    <p class="stage__cap">La regla de la izquierda marca los metros. Con aire activado verás cómo la velocidad deja de crecer: es la <strong>velocidad terminal</strong>.</p>
+
+    <div class="telemetry">
+      <div class="tel" style="--tc:var(--teal)"><div class="tel__k"><svg class="ic"><use href="#i-clock"/></svg>Tiempo</div><div class="tel__v" id="dataTime">0.00<small>s</small></div></div>
+      <div class="tel" style="--tc:var(--ember)"><div class="tel__k"><svg class="ic"><use href="#i-bolt"/></svg>Velocidad</div><div class="tel__v" id="dataVel">0.0<small>m/s</small></div></div>
+      <div class="tel" style="--tc:var(--violet)"><div class="tel__k"><svg class="ic"><use href="#i-path"/></svg>Distancia</div><div class="tel__v" id="dataDist">0.0<small>m</small></div></div>
+      <div class="tel" style="--tc:var(--brass)"><div class="tel__k"><svg class="ic"><use href="#i-down"/></svg>Aceleración</div><div class="tel__v" id="dataAccel">9.8<small>m/s²</small></div></div>
+    </div>
+
+    <div class="result" id="simResult" role="status" aria-live="polite">
+      <div class="result__h"><svg class="ic"><use href="#i-check"/></svg>Medición del impacto</div>
+      <div class="result__b" id="simResultB"></div>
+    </div>
+
+    <div class="formula">
+      <div class="formula__k">Fórmulas usadas</div>
+      <div class="formula__eq">d = <b>½</b> × g × t<sup>2</sup> &nbsp;·&nbsp; v = <b>g</b> × t</div>
+      <div class="formula__key">
+        <span><b>d</b> Distancia recorrida</span>
+        <span><b>t</b> Tiempo de caída</span>
+        <span><b>v</b> Velocidad</span>
+        <span><b>g</b> Gravedad del planeta</span>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ══════════ CARRERA ══════════ -->
+<section class="panel-wrap" id="tp-race" role="tabpanel" aria-labelledby="tb-race" tabindex="0" hidden>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--teal"><svg class="ic"><use href="#i-flag"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">03 — Comparador de caídas</span><h2 class="blk">Carrera de objetos</h2></div>
+    </div>
+    <p class="body">Selecciona dos objetos y un planeta. ¿Llegarán al suelo al mismo tiempo?</p>
+
+    <div class="controls">
+      <label class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-planet"/></svg>Planeta</span>
+        <select id="racePlanet">
+          <option value="tierra">Tierra · 9.8 m/s²</option>
+          <option value="luna">Luna · 1.6 m/s²</option>
+          <option value="marte">Marte · 3.7 m/s²</option>
+          <option value="jupiter">Júpiter · 24.8 m/s²</option>
+        </select>
+      </label>
+      <label class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-layers"/></svg>Carril A</span>
+        <select id="raceObjA">
+          <option value="pelota">Pelota de fútbol</option>
+          <option value="pluma">Pluma</option>
+          <option value="roca">Roca</option>
+          <option value="astronauta">Astronauta</option>
+          <option value="libro">Libro</option>
+          <option value="coche">Coche</option>
+        </select>
+      </label>
+      <label class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-layers"/></svg>Carril B</span>
+        <select id="raceObjB">
+          <option value="pluma">Pluma</option>
+          <option value="pelota">Pelota de fútbol</option>
+          <option value="roca">Roca</option>
+          <option value="astronauta">Astronauta</option>
+          <option value="libro">Libro</option>
+          <option value="coche">Coche</option>
+        </select>
+      </label>
+      <div class="ctl">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-globe"/></svg>Atmósfera</span>
+        <div class="seg" id="raceAir" role="group" aria-label="Resistencia del aire en la carrera">
+          <button type="button" data-air="no" aria-pressed="true">Sin aire (vacío)</button>
+          <button type="button" data-air="si" aria-pressed="false">Con aire</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn--teal" id="raceGo"><svg class="ic"><use href="#i-flag"/></svg>¡Lanzar carrera!</button>
+      <button class="btn btn--ghost" id="raceReset"><svg class="ic"><use href="#i-reset"/></svg>Reiniciar</button>
+    </div>
+
+    <div class="stage" id="raceStage">
+      <div class="stage__tag"><span class="sw" id="raceSw"></span><span id="raceTag">Tierra</span> · <span id="raceTagG">9.80 m/s²</span></div>
+      <div class="stage__live" id="raceLive"><span class="rec"></span><span id="raceLiveT">En carrera</span></div>
+      <div class="stage__empty" id="raceEmpty">
+        <svg class="ic"><use href="#i-flag"/></svg>
+        <p>Pulsa «¡Lanzar carrera!» para empezar</p>
+      </div>
+      <canvas id="raceCanvas" data-aspect="2"></canvas>
+    </div>
+    <p class="stage__cap">Ambos objetos se sueltan a la vez desde la misma altura. El cronómetro de cada carril se detiene al tocar el suelo.</p>
+
+    <div class="result" id="raceResult" role="status" aria-live="polite">
+      <div class="result__h"><svg class="ic"><use href="#i-trophy"/></svg>Resultado de la carrera</div>
+      <div class="result__b" id="raceResultB"></div>
+    </div>
+
+    <div class="note note--violet">
+      <div class="note__t"><svg class="ic"><use href="#i-search"/></svg>Prueba esto</div>
+      En <strong>sin aire</strong>, gana siempre el empate. Con aire, la pluma siempre pierde porque el aire la frena más. ¡Es el experimento de la Torre de Pisa en tu pantalla!
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PLANETAS ══════════ -->
+<section class="panel-wrap" id="tp-compare" role="tabpanel" aria-labelledby="tb-compare" tabindex="0" hidden>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico"><svg class="ic"><use href="#i-planet"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">04 — Catálogo</span><h2 class="blk">Comparar planetas</h2></div>
+    </div>
+    <p class="body">Haz clic en un planeta para ver sus datos y simular cuánto pesarías allí.</p>
+
+    <div class="pgrid" id="planetGrid" role="group" aria-label="Elige un cuerpo celeste"></div>
+  </div>
+
+  <div class="cols-2">
+    <div class="card card--tight rv">
+      <h4 class="sub"><svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-scale"/></svg> Tu peso en este planeta</h4>
+      <div class="ctl" style="margin-top:14px">
+        <span class="ctl__lbl"><svg class="ic"><use href="#i-users"/></svg>Tu masa <span class="ctl__val" id="userWeightVal">50 kg</span></span>
+        <input type="range" id="userWeight" min="20" max="120" value="50" step="1" aria-label="Tu masa en kilogramos">
+      </div>
+      <div class="telemetry" style="margin-top:18px">
+        <div class="tel" style="--tc:var(--brass)"><div class="tel__k"><svg class="ic"><use href="#i-scale"/></svg>Peso</div><div class="tel__v" id="weightResult">490.0<small>N</small></div></div>
+        <div class="tel" style="--tc:var(--teal)"><div class="tel__k"><svg class="ic"><use href="#i-down"/></svg>Gravedad</div><div class="tel__v" id="gResult">9.8<small>m/s²</small></div></div>
+      </div>
+      <p class="body" style="font-size:13.6px;margin-top:14px">Peso = masa × gravedad. Tu masa no cambia; lo que cambia es la fuerza con la que el planeta te atrae.</p>
+    </div>
+
+    <div class="card card--tight rv">
+      <h4 class="sub"><svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-chart"/></svg> Gravedad relativa a la Tierra</h4>
+      <div class="bars" id="compBars"></div>
+      <div class="note" style="margin-top:18px">
+        <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>Dato curioso</div>
+        Si pudieras saltar en la Luna, ¡saltarías <strong>6 veces más alto</strong> que en la Tierra! Pero cuidado: en Júpiter, apenas podrías levantar los pies del suelo.
+      </div>
+    </div>
+  </div>
+
+  <div class="card card--tight rv">
+    <h4 class="sub"><svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-doc"/></svg> Tabla comparativa completa</h4>
+    <div class="scroll-x">
+      <table class="dt">
+        <caption>Valores de referencia NASA · caída de 50 m calculada con t = √(2h/g)</caption>
+        <thead>
+          <tr><th scope="col">Cuerpo</th><th scope="col">Gravedad (m/s²)</th><th scope="col">% vs Tierra</th><th scope="col">Tu peso (50 kg)</th><th scope="col">Caída de 50 m</th></tr>
+        </thead>
+        <tbody id="compTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ QUIZ ══════════ -->
+<section class="panel-wrap" id="tp-quiz" role="tabpanel" aria-labelledby="tb-quiz" tabindex="0" hidden>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--violet"><svg class="ic"><use href="#i-quiz"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">05 — Autoevaluación</span><h2 class="blk">¿Cuánto sabes de gravedad?</h2></div>
+    </div>
+    <p class="body">Diez preguntas. Responde con el ratón o con las teclas <strong class="acc-b">1–4</strong> y avanza con <strong class="acc-b">Enter</strong>.</p>
+
+    <div class="quiz" id="quizBox" style="margin-top:26px">
+      <div class="quiz__top">
+        <span class="quiz__count">Pregunta <b id="qNow">1</b> / <span id="qTotal">10</span></span>
+        <span class="quiz__score"><svg class="ic"><use href="#i-check"/></svg><span id="qScore">0 aciertos</span></span>
+      </div>
+      <div class="quiz__prog" id="qProg" role="presentation"></div>
+      <h3 class="quiz__q" id="qText"></h3>
+      <div class="quiz__opts" id="qOpts" role="group" aria-label="Opciones de respuesta"></div>
+      <div class="quiz__fb" id="qFb" role="status" aria-live="polite"></div>
+      <div class="quiz__nav"><button class="btn btn--primary btn--sm" id="qNext" hidden>Siguiente<svg class="ic"><use href="#i-arrow"/></svg></button></div>
+    </div>
+
+    <div class="score" id="scoreBox" hidden>
+      <div class="score__ring">
+        <svg viewBox="0 0 190 190" aria-hidden="true">
+          <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#8ff0de"/><stop offset=".55" stop-color="#4ee0c8"/><stop offset="1" stop-color="#f2b441"/>
+          </linearGradient></defs>
+          <circle class="score__bgc" cx="95" cy="95" r="85"/>
+          <circle class="score__fgc" id="scoreArc" cx="95" cy="95" r="85"/>
+        </svg>
+        <div class="score__num"><b id="scorePct">0%</b><i id="scoreOf">0 de 10</i></div>
+      </div>
+      <h3 id="scoreMsg"></h3>
+      <p id="scoreSub"></p>
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn btn--primary btn--sm" id="scoreRetry"><svg class="ic"><use href="#i-reset"/></svg>Repetir el quiz</button>
+      </div>
+      <div class="score__rev" id="scoreRev"></div>
+    </div>
+  </div>
+</section>
+<!-- ══════════ EXPERIMENTOS ══════════ -->
+<section class="panel-wrap" id="tp-exp" role="tabpanel" aria-labelledby="tb-exp" tabindex="0" hidden>
+
+  <div class="card rv">
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--teal"><svg class="ic"><use href="#i-flask"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">06 — Laboratorio en casa</span><h2 class="blk">Experimentos prácticos</h2></div>
+    </div>
+    <p class="body">La gravedad no solo se estudia con fórmulas: también se puede <strong class="acc-v">ver y sentir</strong> con experimentos sencillos que puedes hacer en casa. Aquí te explicamos <strong class="acc-b">cómo realizarlos</strong> y <strong class="acc-t">qué ciencia hay detrás</strong> de cada uno.</p>
+  </div>
+
+  <!-- Exp 1 -->
+  <div class="card rv">
+    <span class="expnum">01</span>
+    <div class="sec-head">
+      <span class="sec-ico"><svg class="ic"><use href="#i-flask"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">Experimento 1</span><h3 class="blk">Botella con agua</h3></div>
+    </div>
+
+    <div class="exp">
+      <div class="exp__viz">
+        <div class="stage" id="bottleStage">
+          <div class="stage__tag"><span class="sw" style="--pc:var(--teal)"></span>Gravedad + presión</div>
+          <canvas id="expBottle" data-aspect="0.6667" style="max-width:280px"></canvas>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:2px">
+          <button class="btn btn--primary btn--sm" id="bottleBtn" aria-pressed="false"><svg class="ic"><use href="#i-unlock"/></svg>Destapar tapa</button>
+          <button class="btn btn--ghost btn--sm" id="bottleReset"><svg class="ic"><use href="#i-reset"/></svg>Reiniciar</button>
+        </div>
+        <p class="stage__cap">El orificio lateral permanece abierto. Destapa la parte superior para que salga el agua; vuelve a taparla para detener el flujo.</p>
+      </div>
+
+      <div class="exp__body">
+        <p class="body">Haz un pequeño orificio en un costado de una botella, cerca de la base, y déjalo siempre abierto. Llena la botella y tapa su boca: el agua deja de salir porque no entra aire para reemplazarla. Al destapar la parte superior, la presión del aire permite que el agua vuelva a fluir por el orificio lateral.</p>
+        <div class="note note--teal">
+          <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>Qué demuestra</div>
+          Esto demuestra cómo la <strong>gravedad</strong> y la <strong>presión del aire</strong> influyen en el movimiento del agua.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exp 2 -->
+  <div class="card rv">
+    <span class="expnum">02</span>
+    <div class="sec-head">
+      <span class="sec-ico"><svg class="ic"><use href="#i-scale"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">Experimento 2</span><h3 class="blk">Cuchara, tenedor y palillo</h3></div>
+    </div>
+
+    <div class="exp">
+      <div class="exp__viz">
+        <div class="stage" id="cgStage">
+          <div class="stage__tag"><span class="sw" style="--pc:var(--brass)"></span>Equilibrio</div>
+          <canvas id="expCG" data-aspect="1.1429" style="max-width:400px"></canvas>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:2px">
+          <button class="btn btn--primary btn--sm" id="cgBtn" aria-pressed="true"><svg class="ic"><use href="#i-target"/></svg>Ocultar centro de gravedad</button>
+        </div>
+        <p class="stage__cap">Observa cómo el centro de gravedad queda justo debajo del punto de apoyo del palillo en el vaso.</p>
+      </div>
+
+      <div class="exp__body">
+        <p class="body">El experimento consiste en unir una cuchara y un tenedor con un palillo y apoyarlos en el borde de un vaso. Aunque parece que los objetos deberían caer, permanecen en equilibrio porque su centro de gravedad queda ubicado por debajo del punto de apoyo. La gravedad atrae todo el conjunto hacia abajo, pero la distribución del peso permite que se mantenga estable.</p>
+        <div class="note">
+          <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>Qué demuestra</div>
+          Esto demuestra la relación entre <strong>gravedad</strong>, <strong>centro de gravedad</strong> y <strong>equilibrio</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exp 3 -->
+  <div class="card rv">
+    <span class="expnum">03</span>
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--violet"><svg class="ic"><use href="#i-atom"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">Experimento 3</span><h3 class="blk">La cama o sábana elástica y la gravedad</h3></div>
+    </div>
+    <p class="body">Una sábana tensa con una masa pesada permite visualizar una analogía sencilla de cómo la masa se relaciona con la geometría del espacio-tiempo. Es un modelo didáctico: la tela se hunde por la gravedad terrestre y no reproduce por completo la relatividad.</p>
+
+    <div class="exp">
+      <div class="exp__viz">
+        <div class="stage" id="sheetStage">
+          <div class="stage__tag"><span class="sw" style="--pc:var(--violet)"></span>Espacio-tiempo</div>
+          <canvas id="expSheet" data-aspect="1.3333" style="max-width:520px"></canvas>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:2px">
+          <button class="btn btn--teal btn--sm" id="sheetGo"><svg class="ic"><use href="#i-play"/></svg>Iniciar órbita</button>
+          <button class="btn btn--danger btn--sm" id="sheetStop"><svg class="ic"><use href="#i-stop"/></svg>Detener</button>
+        </div>
+        <p class="stage__cap">La masa deforma la tela y la bola pequeña recorre una trayectoria curva. Es una analogía visual, no una representación literal del espacio-tiempo.</p>
+      </div>
+
+      <div class="exp__body">
+        <div class="mat mat--teal">
+          <div class="mat__h"><svg class="ic"><use href="#i-layers"/></svg>Materiales</div>
+          <ul class="list" style="margin-top:0">
+            <li>Una cama elástica, trampolín, o una sábana estirada bien tensa</li>
+            <li>Una pelota pesada (como una de baloncesto o boliche)</li>
+            <li>Una pelota pequeña y liviana (como una de ping-pong)</li>
+          </ul>
+        </div>
+
+        <div class="mat mat--brass">
+          <div class="mat__h"><svg class="ic"><use href="#i-micro"/></svg>¿Cómo se hace?</div>
+          <ol class="list" style="margin-top:0">
+            <li>Coloca la pelota pesada en el centro de la cama elástica. Observa cómo hunde y deforma la tela.</li>
+            <li>Ahora lanza la pelota pequeña cerca de la pesada y mira cómo la pequeña <em>rueda hacia</em> la pelota grande.</li>
+            <li>Prueba a lanzarla por distintos lados y observa su trayectoria curva.</li>
+          </ol>
+        </div>
+
+        <div class="mat mat--violet">
+          <div class="mat__h"><svg class="ic"><use href="#i-bulb"/></svg>La ciencia detrás</div>
+          <p class="body">La cama elástica sirve como una <strong class="acc-b">analogía visual</strong>: la pelota pesada hunde la tela y la pelota pequeña cambia su trayectoria al rodar por la pendiente. En el espacio, los cuerpos siguen trayectorias determinadas por la geometría del espacio-tiempo y la gravedad.</p>
+          <p class="body" style="margin-top:10px">La comparación tiene límites: el hundimiento de la tela ocurre por la gravedad terrestre, mientras que el espacio-tiempo no es una sábana material. La demostración ayuda a imaginar una curvatura, pero no reproduce exactamente la relatividad general.</p>
+        </div>
+
+        <div class="note note--rose">
+          <div class="note__t"><svg class="ic"><use href="#i-moon"/></svg>Dato curioso</div>
+          La Tierra hace un "hoyo" en el espacio-tiempo tan profundo que la Luna, aunque va derechita, no puede escapar y queda dando vueltas alrededor, ¡como la pelota pequeña en el trampolín!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exp 4 -->
+  <div class="card rv">
+    <span class="expnum">04</span>
+    <div class="sec-head">
+      <span class="sec-ico sec-ico--teal"><svg class="ic"><use href="#i-globe"/></svg></span>
+      <div class="sec-head__t"><span class="sec-num">Experimento 4</span><h3 class="blk">Vaso de agua y tarjeta</h3></div>
+    </div>
+    <p class="body">Llena un vaso hasta el borde, cúbrelo con una tarjeta y voltéalo con cuidado. Al retirar la mano, la tarjeta puede sostener el agua sin que se derrame.</p>
+
+    <div class="exp">
+      <div class="exp__viz">
+        <div class="stage" id="glassStage">
+          <div class="stage__tag"><span class="sw" style="--pc:var(--teal)"></span>Presión atmosférica</div>
+          <canvas id="expGlass" data-aspect="1.25" style="max-width:420px"></canvas>
+        </div>
+        <div class="btn-row" style="justify-content:center;margin-top:2px">
+          <button class="btn btn--teal btn--sm" id="glassFlip" aria-pressed="false"><svg class="ic"><use href="#i-reset"/></svg>Voltear vaso</button>
+          <button class="btn btn--ghost btn--sm" id="glassReset"><svg class="ic"><use href="#i-reset"/></svg>Regresar</button>
+        </div>
+        <p class="stage__cap" id="glassCaption" aria-live="polite">Vaso lleno y tarjeta colocada en la boca. Pulsa «Voltear vaso» para observar el efecto.</p>
+      </div>
+
+      <div class="exp__body">
+        <div class="mat mat--teal">
+          <div class="mat__h"><svg class="ic"><use href="#i-layers"/></svg>Materiales</div>
+          <ul class="list" style="margin-top:0">
+            <li>Un vaso transparente, liso y sin grietas</li>
+            <li>Agua suficiente para llenar el vaso hasta el borde</li>
+            <li>Una tarjeta lisa, firme e impermeable, un poco más grande que la boca del vaso</li>
+          </ul>
+        </div>
+
+        <div class="mat mat--brass">
+          <div class="mat__h"><svg class="ic"><use href="#i-micro"/></svg>¿Cómo se hace?</div>
+          <ol class="list" style="margin-top:0">
+            <li>Haz el experimento sobre un fregadero o una bandeja. Llena el vaso hasta el borde.</li>
+            <li>Coloca la tarjeta sobre toda la boca del vaso y presiónala para sellarla.</li>
+            <li>Sujeta la tarjeta con una mano, voltea el vaso y, cuando esté boca abajo, retira la mano lentamente.</li>
+            <li>Para regresar el vaso, vuelve a sujetar la tarjeta antes de girarlo.</li>
+          </ol>
+        </div>
+
+        <div class="note note--teal">
+          <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>¿Por qué no se derrama?</div>
+          La presión del aire exterior empuja la tarjeta hacia arriba. Con el vaso lleno y el borde bien sellado, esa presión ayuda a sostener la tarjeta y el agua; la tensión superficial también contribuye al sello.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card--tight rv">
+    <div class="note note--rose" style="margin-top:0">
+      <div class="note__t"><svg class="ic"><use href="#i-alert"/></svg>Seguridad</div>
+      Realiza estos experimentos con la supervisión de un adulto. Haz el experimento del vaso sobre un fregadero o una bandeja, y recoge el agua derramada para evitar resbalones. Ten cuidado con la aguja al perforar la botella.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ INVESTIGACIÓN ══════════ -->
+<section class="panel-wrap" id="tp-doc" role="tabpanel" aria-labelledby="tb-doc" tabindex="0" hidden>
+
+  <div class="dochead rv" id="d-info" style="scroll-margin-top:96px">
+    <div class="k">Información del proyecto · ANDRÓMEDA</div>
+    <h2>Campo <em>gravitacional</em></h2>
+    <p class="sub">CAMPO GRAVITACIONAL: Entre masas y fuerza · Grupo #4</p>
+    <div class="chips">
+      <span class="chip"><svg class="ic"><use href="#i-users"/></svg>Grupo #4</span>
+      <span class="chip"><svg class="ic"><use href="#i-layers"/></svg>Investigación mixta</span>
+      <span class="chip"><svg class="ic"><use href="#i-globe"/></svg>ODS 4 · 9 · 13 · 17</span>
+      <span class="chip"><svg class="ic"><use href="#i-doc"/></svg>Documento completo</span>
+    </div>
+  </div>
+
+  <div class="doc">
+    <aside class="doc__toc" aria-label="Índice del documento">
+      <h4>Índice</h4>
+      <ol>
+        <li><a href="#d-info" class="on">Información del proyecto</a></li>
+        <li><a href="#d-contenidos">Contenidos del proyecto</a></li>
+        <li><a href="#d-intro">Introducción</a></li>
+        <li><a href="#d-campo">Campo gravitacional</a></li>
+        <li><a href="#d-objetivos">Objetivos</a></li>
+        <li><a href="#d-preguntas">Preguntas de investigación</a></li>
+        <li><a href="#d-problema">Planteamiento del problema</a></li>
+        <li><a href="#d-just">Justificación</a></li>
+        <li><a href="#d-metod">Metodología preliminar</a></li>
+        <li><a href="#d-datos">Relación y análisis de datos</a></li>
+        <li><a href="#d-producto">Descripción del producto</a></li>
+        <li><a href="#d-marco">Marco teórico</a></li>
+        <li><a href="#d-ods">Contribución de los ODS</a></li>
+        <li><a href="#d-equipo">El equipo</a></li>
+        <li><a href="#d-biblio">Bibliografía inicial</a></li>
+      </ol>
+    </aside>
+
+    <div class="doc__body">
+
+      <article class="docsec" id="d-contenidos">
+        <h3><span class="n">01</span>Contenidos del proyecto</h3>
+        <div class="lede">Índice original del documento</div>
+        <div class="docgrid">
+          <div class="mini"><b><svg class="ic"><use href="#i-book"/></svg>Introducción</b><p>Contexto, inspiración y propósito del trabajo.</p></div>
+          <div class="mini mini--teal"><b><svg class="ic"><use href="#i-spark"/></svg>Puntos clave</b><p>Las ideas fundamentales del proyecto.</p></div>
+          <div class="mini mini--violet"><b><svg class="ic"><use href="#i-info"/></svg>Información general</b><p>Datos de partida sobre el campo gravitacional.</p></div>
+          <div class="mini"><b><svg class="ic"><use href="#i-target"/></svg>Objetivos</b><p>Objetivo general y objetivos específicos.</p></div>
+          <div class="mini mini--teal"><b><svg class="ic"><use href="#i-chart"/></svg>Cifras obtenidas</b><p>Resultados de las mediciones y evaluaciones.</p></div>
+          <div class="mini mini--rose"><b><svg class="ic"><use href="#i-path"/></svg>Previsión de futuro</b><p>Hacia dónde puede crecer el proyecto.</p></div>
+          <div class="mini mini--violet"><b><svg class="ic"><use href="#i-users"/></svg>Colaboraciones</b><p>Quién participa y con qué apoyo.</p></div>
+          <div class="mini"><b><svg class="ic"><use href="#i-check"/></svg>Conclusiones finales</b><p>Cierre y valoración del trabajo.</p></div>
+        </div>
+      </article>
+
+      <article class="docsec" id="d-intro">
+        <h3><span class="n">02</span>Introducción</h3>
+        <div class="lede">Contexto y propósito</div>
+        <p class="body">Este proyecto de investigación y diseño didáctico aborda el estudio de las masas y fuerzas, centrándose específicamente en la comprensión del campo gravitacional como fenómeno físico fundamental. Inspirado en metodologías de divulgación científica desarrolladas por la NASA, este trabajo tiene como propósito investigar, diseñar y modelar estrategias pedagógicas que permiten visualizar de manera tangible cómo actúa la gravedad entre los cuerpos.</p>
+        <p class="body">La propuesta metodológica se fundamenta en el experimento de la <strong class="acc-b">sábana elástica</strong>, una analogía física que representa visualmente la curvatura del espacio-tiempo generado por la presencia de masa, permitiendo observar cómo los objetos se atraen mutuamente siguiendo trayectorias determinadas por esta deformación del espacio. A partir de este modelo central, se desarrollarán experimentos caseros accesibles y reproducibles en entornos educativos, complementado con una simulación virtual que permita explorar dinámicamente las interacciones gravitacionales entre los cuerpos celestes en distintos escenarios.</p>
+        <p class="body">La problemática que motiva este proyecto radica en la dificultad que enfrentan los estudiantes para comprender el campo gravitacional; buscamos transformar la experiencia del tema en una enseñanza didáctica intuitiva y fácil de entender.</p>
+      </article>
+
+      <article class="docsec" id="d-campo">
+        <h3><span class="n">03</span>Campo gravitacional</h3>
+        <div class="lede">Definición y fórmula</div>
+        <p class="body">Es la <strong class="acc-b">región del espacio</strong> donde un objeto ejerce una fuerza de atracción gravitatoria sobre otros cuerpos. Permite conocer qué tan fuerte es la gravedad.</p>
+        <p class="body"><strong class="acc-v">Isaac Newton:</strong> científico que formuló la teoría de la gravitación universal, explicando que la atracción entre los objetos depende de su masa y de la distancia que los separa.</p>
+
+        <div class="formula">
+          <div class="formula__k">Fórmula del campo gravitacional</div>
+          <div class="formula__eq">g = <b>G</b>M / r<sup>2</sup></div>
+          <div class="formula__key">
+            <span><b>g</b> Campo gravitacional</span>
+            <span><b>G</b> Constante universal</span>
+            <span><b>M</b> Masa que atrae</span>
+            <span><b>r</b> Distancia al centro</span>
+          </div>
+        </div>
+
+        <ul class="list" style="margin-top:20px">
+          <li><strong class="acc-v">g (campo gravitacional):</strong> representa la fuerza gravitatoria por unidad de masa en un punto del espacio.</li>
+          <li><strong class="acc-v">G (constante de gravitación universal):</strong> constante que determina la intensidad de la fuerza gravitatoria entre dos cuerpos.</li>
+          <li><strong class="acc-v">M (masa del objeto que atrae):</strong> cantidad de materia del cuerpo que genera el campo gravitacional. A mayor masa, mayor gravedad.</li>
+          <li><strong class="acc-v">r (distancia al centro del objeto):</strong> distancia desde el centro del cuerpo que genera el campo gravitacional hasta el punto donde se mide. A mayor distancia, menor gravedad.</li>
+        </ul>
+
+        <div class="note">
+          <div class="note__t"><svg class="ic"><use href="#i-bulb"/></svg>Relaciones clave</div>
+          <strong>Relación masa-gravedad:</strong> entre más grande sea la masa de un objeto, más fuerte será su campo gravitacional.<br>
+          <strong>Relación distancia-gravedad:</strong> entre más lejos se encuentre un objeto, más débil será la fuerza gravitacional que experimenta.
+        </div>
+      </article>
+
+      <article class="docsec" id="d-objetivos">
+        <h3><span class="n">04</span>Objetivos</h3>
+        <div class="lede">General y específicos</div>
+        <h4 class="sub">Objetivo general</h4>
+        <p class="body">Fortalecer la comprensión del concepto de campo gravitacional en los estudiantes mediante estrategias didácticas que permitan explicar su funcionamiento, aplicación y relevancia en la vida cotidiana, superando sus dificultades de aprendizaje identificadas.</p>
+        <h4 class="sub">Objetivos específicos</h4>
+        <ul class="list">
+          <li>Investigar los conceptos fundamentales del campo gravitacional, sus características, aplicaciones y principales dificultades de aprendizaje en los estudiantes, a partir de la revisión bibliográfica y análisis de situaciones cotidianas.</li>
+          <li>Modelar la simulación del campo gravitacional mediante herramientas digitales o representaciones gráficas, con el fin de visualizar la interacción entre masas, la deformación del espacio y el movimiento de los cuerpos.</li>
+          <li>Diseñar estrategias didácticas que faciliten la comprensión del campo gravitacional, integrando recursos visuales, actividades guiadas y la resolución de fenómenos físicos de forma interactiva.</li>
+          <li>Realizar experimentos caseros, entre ellos el experimento de la sábana elástica, para demostrar de manera práctica cómo una masa deforma el espacio y cómo se relaciona este fenómeno con la gravedad y el movimiento de los cuerpos.</li>
+        </ul>
+      </article>
+
+      <article class="docsec" id="d-preguntas">
+        <h3><span class="n">05</span>Preguntas de investigación</h3>
+        <div class="lede">Macro y micro preguntas</div>
+        <h4 class="sub">Macro pregunta</h4>
+        <p class="body">¿Cómo pueden los modelos matemáticos y el análisis astro-estadístico de datos astronómicos reales explicar, describir y predecir fenómenos del sistema solar, de exoplanetas y otros fenómenos directos e indirectos asociados de la astronomía?</p>
+        <h4 class="sub">Micro preguntas</h4>
+        <ul class="list">
+          <li>¿Cómo influye la masa de un objeto en la fuerza gravitacional que ejerce sobre otro?</li>
+          <li>¿Qué pasa con la fuerza gravitacional cuando aumenta o disminuye la distancia entre dos cuerpos?</li>
+          <li>¿Cómo se puede usar la gravedad para explicar el movimiento de los planetas y otros cuerpos en el espacio?</li>
+          <li>¿Qué modelos matemáticos permiten calcular y representar el campo gravitacional de un cuerpo celeste?</li>
+          <li>¿Cómo se relaciona el campo gravitacional con fenómenos cotidianos como el peso de los objetos o las mareas?</li>
+        </ul>
+      </article>
+
+      <article class="docsec" id="d-problema">
+        <h3><span class="n">06</span>Planteamiento del problema</h3>
+        <div class="lede">Qué se investiga y por qué</div>
+        <p class="body">El proyecto estudia el comportamiento gravitacional, es decir, cómo la gravedad actúa entre los cuerpos con masa. Aunque la gravedad explica muchos fenómenos del universo, a los estudiantes les resulta difícil comprender el concepto de campo gravitacional y visualizar cómo actúa realmente entre los objetos.</p>
+        <p class="body">Por esta razón, se propone investigarlo mediante modelos y experimentos sencillos, como la sábana elástica, que permiten observar de manera más clara la atracción gravitacional y entender mejor este fenómeno fundamental.</p>
+        <div class="note note--violet">
+          <div class="note__t"><svg class="ic"><use href="#i-search"/></svg>Pregunta de investigación</div>
+          ¿Cómo influye el comportamiento gravitacional en el movimiento de los cuerpos celestes y qué relación tiene con las ondas gravitacionales?
+        </div>
+      </article>
+
+      <article class="docsec" id="d-just">
+        <h3><span class="n">07</span>Justificación</h3>
+        <div class="lede">Cinco razones</div>
+        <ol class="list">
+          <li><strong class="acc-b">Importancia del estudio:</strong> el estudio del comportamiento gravitacional es importante porque la gravedad es una de las fuerzas fundamentales del universo. Gracias a ella es posible explicar el movimiento de los planetas, las órbitas de los satélites, la formación de estrellas y galaxias, e incluso fenómenos recientes como las ondas gravitacionales. Comprender este tema permite conocer mejor cómo funciona el universo y por qué ocurren muchos de los eventos que observamos en el espacio.</li>
+          <li><strong class="acc-b">En la astronomía:</strong> el comportamiento gravitacional ayuda a interpretar el movimiento de los cuerpos celestes, predecir eclipses, estudiar agujeros negros y entender el origen de las ondas gravitacionales, que proporcionan nueva información sobre el cosmos.</li>
+          <li><strong class="acc-b">En las matemáticas:</strong> este tema requiere el uso de fórmulas, cálculos y modelos para describir la fuerza de gravedad, las trayectorias de los cuerpos y las distancias en el espacio. Esto demuestra la importancia de las matemáticas para explicar fenómenos naturales.</li>
+          <li><strong class="acc-b">Para la comunidad educativa:</strong> esta investigación fomenta el interés por la ciencia, fortalece el pensamiento crítico y muestra cómo diferentes áreas del conocimiento trabajan juntas para resolver preguntas sobre el universo.</li>
+          <li><strong class="acc-b">Como grupo:</strong> este proyecto permitirá desarrollar habilidades de investigación, trabajo en equipo, análisis de información y comunicación. Además, ayudará a comprender que la ciencia está en constante evolución y que todavía existen preguntas sobre la gravedad que continúan siendo estudiadas por los científicos. De esta manera, el proyecto contribuirá a ampliar nuestros conocimientos sobre uno de los fenómenos más importantes de la naturaleza.</li>
+        </ol>
+      </article>
+
+      <article class="docsec" id="d-metod">
+        <h3><span class="n">08</span>Metodología preliminar</h3>
+        <div class="lede">Tipo de investigación</div>
+        <p class="body"><strong class="acc-b">Tipo de investigación:</strong> mixta. Combina revisión documental de leyes físicas y datos astronómicos, con análisis correlacional entre variables como masa, distancia y fuerza gravitacional, además de observación y modelado de fenómenos reales.</p>
+      </article>
+
+      <article class="docsec" id="d-datos">
+        <h3><span class="n">09</span>Relación y análisis de datos</h3>
+        <div class="lede">Herramientas y datos</div>
+        <h4 class="sub">Herramientas a utilizar</h4>
+        <ul class="list">
+          <li><strong class="acc-v">Stellarium:</strong> para observar y estudiar el movimiento de cuerpos celestes.</li>
+          <li><strong class="acc-v">GeoGebra:</strong> para representar matemáticamente la ley de gravitación universal.</li>
+          <li><strong class="acc-v">Universe Sandbox:</strong> para simular escenarios gravitacionales de forma dinámica.</li>
+        </ul>
+        <h4 class="sub">¿Qué se modelará?</h4>
+        <p class="body">Se representará matemáticamente la Ley de Gravitación Universal de Newton: la relación directa entre la masa de los cuerpos y la fuerza gravitacional, y la relación inversa con el cuadrado de la distancia que los separa. También se modelará cómo esta fuerza explica las órbitas de planetas, lunas y otros cuerpos espaciales.</p>
+        <h4 class="sub">¿Qué datos se analizarán?</h4>
+        <p class="body">Se utilizarán datos reales de:</p>
+        <ul class="list">
+          <li>Masas y distancias entre el Sol y los planetas del sistema solar (obtenidos de bases de datos de la NASA o la Agencia Espacial Europea)</li>
+          <li>Datos de órbitas de cuerpos celestes</li>
+          <li>Resultados de las evaluaciones de los estudiantes, para medir el avance en la comprensión del tema</li>
+        </ul>
+      </article>
+
+      <article class="docsec" id="d-producto">
+        <h3><span class="n">10</span>Descripción del producto</h3>
+        <div class="lede">Productos principales y final</div>
+        <h4 class="sub">Productos principales</h4>
+        <ul class="list">
+          <li><strong class="acc-v">Simulación:</strong> para modificar masa/distancia y ver cambios en la gravedad y órbitas.</li>
+          <li><strong class="acc-v">Sábana elástica:</strong> representa de forma sencilla cómo la masa curva el espacio (base de la Relatividad).</li>
+          <li><strong class="acc-v">Experimentos caseros:</strong> actividades fáciles con materiales comunes para comprobar las leyes de la gravedad.</li>
+        </ul>
+        <h4 class="sub">Producto final</h4>
+        <ul class="list">
+          <li>Simulación digital interactiva</li>
+          <li>Modelo físico con sábana elástica</li>
+          <li>Guía de experimentos caseros</li>
+        </ul>
+      </article>
+
+      <article class="docsec" id="d-marco">
+        <h3><span class="n">11</span>Marco teórico</h3>
+        <div class="lede">Newton y la fórmula del campo</div>
+        <p class="body">El campo gravitacional es una "fuerza invisible" que rodea a los objetos y explica fenómenos de la vida diaria y del universo de una manera clara y práctica.</p>
+        <p class="body">Este concepto fue desarrollado por <strong class="acc-v">Isaac Newton</strong>, quien explicó que todos los objetos en el universo se atraen entre sí, pero esa atracción depende de qué tan grandes son (su masa) y de qué tan lejos están. El campo gravitacional nos ayuda a entender no solo por qué caen las cosas, sino también cómo se mueven los planetas alrededor del Sol.</p>
+        <div class="formula">
+          <div class="formula__k">Fórmula del campo gravitacional</div>
+          <div class="formula__eq">g = <b>G</b>M / r<sup>2</sup></div>
+          <div class="formula__key">
+            <span><b>g</b> campo gravitacional (fuerza por unidad de masa)</span>
+            <span><b>G</b> constante de gravitación universal</span>
+            <span><b>M</b> masa del objeto que atrae</span>
+            <span><b>r</b> distancia desde el centro del objeto</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="docsec" id="d-ods">
+        <h3><span class="n">12</span>Contribución de los ODS</h3>
+        <div class="lede">4 · 9 · 13 · 17</div>
+        <div class="ods">
+          <div class="ods__i" style="--oc:#4ade80">
+            <b>04</b><span>Educación de Calidad</span>
+            <p>Mejora la comprensión de conceptos físicos complejos mediante estrategias didácticas accesibles, reduciendo brechas de aprendizaje en ciencias exactas.</p>
+          </div>
+          <div class="ods__i" style="--oc:#f2b441">
+            <b>09</b><span>Industria, Innovación e Infraestructura</span>
+            <p>Fomenta el uso de herramientas digitales y modelos matemáticos para explicar fenómenos naturales, impulsando habilidades en ciencia y tecnología.</p>
+          </div>
+          <div class="ods__i" style="--oc:#8f80f0">
+            <b>13 · 17</b><span>Divulgación y colaboración</span>
+            <p>Contribuye a la divulgación científica sobre el universo y promueve el trabajo colaborativo entre estudiantes y áreas del conocimiento.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="docsec" id="d-equipo">
+        <h3><span class="n">13</span>El equipo</h3>
+        <div class="lede">Grupo #4 · 6 integrantes</div>
+        <div class="team">
+          <div class="who"><span class="who__av">KC</span><span><span class="who__n">Kevin Corredor</span><span class="who__r">Grupo #4</span></span></div>
+          <div class="who"><span class="who__av">DF</span><span><span class="who__n">Danna Fuquene</span><span class="who__r">Grupo #4</span></span></div>
+          <div class="who"><span class="who__av">LC</span><span><span class="who__n">Laura Cifuentes</span><span class="who__r">Grupo #4</span></span></div>
+          <div class="who"><span class="who__av">GC</span><span><span class="who__n">Gabriela Cortes</span><span class="who__r">Grupo #4</span></span></div>
+          <div class="who"><span class="who__av">NP</span><span><span class="who__n">Nicolas Pantoja</span><span class="who__r">Grupo #4</span></span></div>
+          <div class="who"><span class="who__av">NO</span><span><span class="who__n">Nicolas Ocampo</span><span class="who__r">Grupo #4</span></span></div>
+        </div>
+      </article>
+
+      <article class="docsec" id="d-biblio">
+        <h3><span class="n">14</span>Bibliografía inicial</h3>
+        <div class="lede">Cuatro fuentes</div>
+        <ol class="refs">
+          <li><span class="tag">Libro</span>Hewitt, P. G. (2016). <em>Física conceptual</em>. Pearson Educación. Texto fundamental que explica la gravitación universal y el campo gravitacional con ejemplos accesibles para estudiantes.</li>
+          <li><span class="tag">Artículo</span>Gómez, M., y Ruiz, J. (2020). Estrategias didácticas para la enseñanza del campo gravitacional en educación secundaria. <em>Revista Latinoamericana de Educación en Ciencias</em>, 15(2), 45-62.</li>
+          <li><span class="tag">Página científica</span>NASA. (s.f.). La gravedad en el universo. Recuperado de <span class="url">https://solarsystem.nasa.gov/resources/gravity-in-the-solar-system/</span>. Fuente oficial con datos y explicaciones verificadas sobre gravitación.</li>
+          <li><span class="tag">Documento institucional</span>Ministerio de Educación Nacional de Colombia. (2022). <em>Orientaciones curriculares para el área de ciencias naturales: Física</em>. Recuperado de <span class="url">https://www.mineducacion.gov.co/</span>. Guía oficial que respalda el enfoque educativo del proyecto.</li>
+        </ol>
+      </article>
+
+    </div>
+  </div>
+
+  <div class="note note--teal rv" style="margin-top:26px">
+    <div class="note__t"><svg class="ic"><use href="#i-check"/></svg>Nota</div>
+    Esta sección contiene únicamente la información del documento del proyecto <strong>ANDRÓMEDA — Campo gravitacional: entre masas y fuerza</strong> (Grupo #4), extraída de la presentación original del equipo.
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="foot__in wrap">
+    <div class="foot__brand">
+      <span class="brand__txt"><b>ANDRÓMEDA</b><i>Campo gravitacional · Grupo #4</i></span>
+      <p>Kevin Corredor · Danna Fuquene · Laura Cifuentes · Gabriela Cortes · Nicolas Pantoja · Nicolas Ocampo</p>
+    </div>
+    <div class="foot__meta">
+      <div><span>Proyecto</span><b>Campo gravitacional: entre masas y fuerza</b></div>
+      <div><span>Metodología</span><b>Mixta · documental y correlacional</b></div>
+      <div><span>ODS</span><b>4 · 9 · 13 · 17</b></div>
+    </div>
+  </div>
+  <div class="foot__bot wrap">
+    <span>© 2026 ANDRÓMEDA — Proyecto de investigación escolar.</span>
+    <span>Datos de gravedad: NASA · <span class="fm">g = GM/r²</span></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+'use strict';
+
+/* ═══════════════ UTILIDADES ═══════════════ */
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const TAU = Math.PI * 2;
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dpr = () => Math.min(window.devicePixelRatio || 1, 2);
+
+function fitCanvas(cv) {
+  const asp = parseFloat(cv.dataset.aspect || '2');
+  const w = Math.max(160, Math.round(cv.clientWidth || cv.parentElement.clientWidth || 640));
+  const h = Math.max(90, Math.round(w / asp));
+  const d = dpr();
+  const hs = h + 'px';
+  if (cv.style.height !== hs) cv.style.height = hs;
+  const bw = Math.round(w * d), bh = Math.round(h * d);
+  if (cv.width !== bw) cv.width = bw;
+  if (cv.height !== bh) cv.height = bh;
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  cv._w = w; cv._h = h;
+  return ctx;
+}
+
+function setTel(el, txt) {
+  if (!el) return;
+  const s = el.querySelector('small');
+  el.textContent = txt;
+  if (s) el.appendChild(s);
+}
+
+function paintRange(r) {
+  const mn = parseFloat(r.min), mx = parseFloat(r.max);
+  r.style.setProperty('--pct', (((parseFloat(r.value) - mn) / (mx - mn)) * 100).toFixed(2) + '%');
+}
+
+function niceStep(x) {
+  if (!(x > 0)) return 1;
+  const e = Math.pow(10, Math.floor(Math.log(x) / Math.LN10));
+  const f = x / e;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * e;
+}
+
+function rr(c, x, y, w, h, r) {
+  const k = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  c.beginPath();
+  c.moveTo(x + k, y);
+  c.arcTo(x + w, y, x + w, y + h, k);
+  c.arcTo(x + w, y + h, x, y + h, k);
+  c.arcTo(x, y + h, x, y, k);
+  c.arcTo(x, y, x + w, y, k);
+  c.closePath();
+}
+
+/* ═══════════════ DATOS FÍSICOS ═══════════════ */
+const P = {
+  tierra:   { n:'Tierra',   g:9.8,  c1:'#cfe6ff', c2:'#3b82f6', c3:'#08264d', pc:'#5aa9f0' },
+  luna:     { n:'Luna',     g:1.6,  c1:'#ffffff', c2:'#c3c9d2', c3:'#494f58', pc:'#c9ced6' },
+  marte:    { n:'Marte',    g:3.7,  c1:'#ffd0b4', c2:'#d1513a', c3:'#4a150c', pc:'#ef6a4f' },
+  venus:    { n:'Venus',    g:8.9,  c1:'#fff3c6', c2:'#e0a52c', c3:'#5b3906', pc:'#eab93f' },
+  jupiter:  { n:'Júpiter',  g:24.8, c1:'#fbe3bd', c2:'#c4763a', c3:'#3f1e09', pc:'#dd9450' },
+  saturno:  { n:'Saturno',  g:10.4, c1:'#fbecd0', c2:'#d0a455', c3:'#4e350e', pc:'#dcb877', ring:true },
+  mercurio: { n:'Mercurio', g:3.7,  c1:'#e6eaf0', c2:'#8b9099', c3:'#2f3238', pc:'#a2a8b2' },
+  neptuno:  { n:'Neptuno',  g:11.2, c1:'#b6d2ff', c2:'#2f5fd0', c3:'#071634', pc:'#4a7bf0' }
+};
+const PKEYS = Object.keys(P);
+
+const O = {
+  pelota:     { n:'Pelota de fútbol', c:'#f0a02a', s:20, mass:0.43,  drag:0.25 },
+  pluma:      { n:'Pluma',            c:'#a78bfa', s:15, mass:0.005, drag:0.8  },
+  libro:      { n:'Libro',            c:'#dc2626', s:22, mass:0.5,   drag:0.3  },
+  moneda:     { n:'Moneda',           c:'#fbbf24', s:12, mass:0.006, drag:0.15 },
+  roca:       { n:'Roca',             c:'#a8a29e', s:24, mass:2.0,   drag:0.2  },
+  astronauta: { n:'Astronauta',       c:'#e8ebf1', s:30, mass:80,    drag:0.5  },
+  coche:      { n:'Coche',            c:'#5ea2f7', s:28, mass:1200,  drag:0.35 }
+};
+const OKEYS = Object.keys(O);
+const objR = k => clamp(O[k].s * 0.62, 8, 21);
+
+/* caída estimada: sin aire t=√(2h/g); con aire se aproxima al régimen terminal */
+function fallTime(g, h, key, air) {
+  const t0 = Math.sqrt(2 * h / g);
+  if (!air) return t0;
+  const o = O[key];
+  const vt = Math.sqrt(g * o.mass * 10 / o.drag);
+  return Math.max(t0, h / vt + vt / g);
+}
+
+/* ═══════════════ MOTOR DE ANIMACIÓN ═══════════════ */
+const Anim = {
+  list: [], raf: 0, last: 0,
+  register(o) {
+    o.on = false; o.visible = false;
+    o.ctx = fitCanvas(o.cv);
+    this.list.push(o);
+    new IntersectionObserver(es => {
+      es.forEach(e => { o.visible = e.isIntersecting; });
+      if (o.visible) { o.ctx = fitCanvas(o.cv); o.draw(); }
+      this.pump();
+    }, { threshold: 0 }).observe(o.cv);
+    new ResizeObserver(() => { o.ctx = fitCanvas(o.cv); o.draw(); }).observe(o.cv);
+    return o;
+  },
+  pump() {
+    const need = !document.hidden && this.list.some(o => o.on && o.visible);
+    if (need && !this.raf) { this.last = 0; this.raf = requestAnimationFrame(this.frame); }
+    else if (!need && this.raf) { cancelAnimationFrame(this.raf); this.raf = 0; }
+  },
+  frame(ts) {
+    Anim.raf = 0;
+    const dt = Anim.last ? clamp((ts - Anim.last) / 1000, 0, 0.05) : 0.016;
+    Anim.last = ts;
+    for (const o of Anim.list) if (o.on && o.visible) o.step(dt, ts);
+    Anim.pump();
+  }
+};
+document.addEventListener('visibilitychange', () => Anim.pump());
+function redrawAll() { Anim.list.forEach(o => { o.ctx = fitCanvas(o.cv); o.draw(); }); }
+
+/* ═══════════════ DIBUJO: ESFERAS Y OBJETOS ═══════════════ */
+function sphere(c, x, y, r, c1, c2, c3, glow) {
+  if (glow) {
+    c.save(); c.shadowColor = glow; c.shadowBlur = r * 1.2;
+    c.fillStyle = c2; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); c.restore();
+  }
+  const g = c.createRadialGradient(x - r * .34, y - r * .36, r * .06, x, y, r * 1.02);
+  g.addColorStop(0, c1); g.addColorStop(.46, c2); g.addColorStop(1, c3);
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill();
+}
+
+function drawObj(c, key, x, y, r, col) {
+  c.save();
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  switch (key) {
+    case 'pelota': {
+      sphere(c, x, y, r, '#ffe6b8', col, '#6d3f04', col);
+      c.strokeStyle = 'rgba(0,0,0,.34)'; c.lineWidth = Math.max(1, r * .1);
+      c.beginPath(); c.moveTo(x - r, y); c.quadraticCurveTo(x, y - r * .55, x + r, y); c.stroke();
+      c.beginPath(); c.moveTo(x - r, y); c.quadraticCurveTo(x, y + r * .55, x + r, y); c.stroke();
+      c.beginPath(); c.moveTo(x, y - r); c.quadraticCurveTo(x - r * .5, y, x, y + r); c.stroke();
+      break;
+    }
+    case 'pluma': {
+      c.translate(x, y); c.rotate(-.5);
+      const g = c.createLinearGradient(0, -r * 1.6, 0, r * 1.6);
+      g.addColorStop(0, '#ece2ff'); g.addColorStop(1, col);
+      c.shadowColor = col; c.shadowBlur = r; c.fillStyle = g;
+      c.beginPath(); c.moveTo(0, -r * 1.6);
+      c.bezierCurveTo(r * .95, -r * .7, r * .78, r * .85, 0, r * 1.6);
+      c.bezierCurveTo(-r * .78, r * .85, -r * .95, -r * .7, 0, -r * 1.6);
+      c.fill(); c.shadowBlur = 0;
+      c.strokeStyle = 'rgba(255,255,255,.65)'; c.lineWidth = Math.max(.8, r * .09);
+      c.beginPath(); c.moveTo(0, -r * 1.5); c.lineTo(0, r * 1.8); c.stroke();
+      c.strokeStyle = 'rgba(0,0,0,.16)'; c.lineWidth = Math.max(.6, r * .055);
+      for (let i = -2; i <= 2; i++) {
+        const yy = i * r * .45;
+        c.beginPath(); c.moveTo(0, yy); c.lineTo(r * .6, yy + r * .3); c.stroke();
+        c.beginPath(); c.moveTo(0, yy); c.lineTo(-r * .6, yy + r * .3); c.stroke();
+      }
+      break;
+    }
+    case 'libro': {
+      const w = r * 1.5, h = r * 1.12;
+      c.shadowColor = col; c.shadowBlur = r * .9; c.fillStyle = col;
+      rr(c, x - w, y - h, w * 2, h * 2, r * .22); c.fill(); c.shadowBlur = 0;
+      c.fillStyle = 'rgba(241,238,228,.93)';
+      rr(c, x - w * .84, y - h * .8, w * 1.68, h * 1.6, r * .1); c.fill();
+      c.fillStyle = col; rr(c, x - w, y - h, w * .44, h * 2, r * .18); c.fill();
+      c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(x - w * .48, y - h * .78); c.lineTo(x - w * .48, y + h * .78); c.stroke();
+      break;
+    }
+    case 'moneda': {
+      sphere(c, x, y, r, '#fff4cd', col, '#7d5209', col);
+      c.strokeStyle = 'rgba(0,0,0,.26)'; c.lineWidth = Math.max(1, r * .13);
+      c.beginPath(); c.arc(x, y, r * .6, 0, TAU); c.stroke();
+      break;
+    }
+    case 'roca': {
+      const g = c.createLinearGradient(x - r, y - r, x + r, y + r);
+      g.addColorStop(0, '#ded8d0'); g.addColorStop(.5, col); g.addColorStop(1, '#454039');
+      c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = r * .7; c.fillStyle = g;
+      const pts = [[1,.05],[.72,.62],[.18,.98],[-.5,.86],[-.95,.3],[-.8,-.45],[-.25,-.95],[.45,-.8]];
+      c.beginPath();
+      pts.forEach((p, i) => { const px = x + p[0] * r, py = y + p[1] * r; i ? c.lineTo(px, py) : c.moveTo(px, py); });
+      c.closePath(); c.fill(); c.shadowBlur = 0;
+      c.strokeStyle = 'rgba(0,0,0,.28)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(x - r * .4, y - r * .3); c.lineTo(x + r * .1, y + r * .12); c.lineTo(x + r * .52, y - r * .12); c.stroke();
+      break;
+    }
+    case 'astronauta': {
+      c.shadowColor = '#cfd6e4'; c.shadowBlur = r;
+      c.fillStyle = '#98a1b3'; rr(c, x - r * .95, y - r * .5, r * 1.9, r * 1.45, r * .3); c.fill();
+      c.fillStyle = col; rr(c, x - r * .7, y - r * .28, r * 1.4, r * 1.22, r * .44); c.fill();
+      c.shadowBlur = 0;
+      c.fillStyle = '#f4f6fa'; c.beginPath(); c.arc(x, y - r * .6, r * .68, 0, TAU); c.fill();
+      const vg = c.createLinearGradient(x - r * .5, y - r * 1.1, x + r * .5, y - r * .2);
+      vg.addColorStop(0, '#8fdcf8'); vg.addColorStop(.55, '#1e3a5f'); vg.addColorStop(1, '#0a1120');
+      c.fillStyle = vg; c.beginPath(); c.arc(x, y - r * .58, r * .47, 0, TAU); c.fill();
+      c.strokeStyle = 'rgba(242,180,65,.85)'; c.lineWidth = Math.max(1, r * .1);
+      c.beginPath(); c.moveTo(x - r * .66, y + r * .3); c.lineTo(x + r * .66, y + r * .3); c.stroke();
+      break;
+    }
+    case 'coche': {
+      const w = r * 1.5, h = r * .76;
+      c.shadowColor = col; c.shadowBlur = r; c.fillStyle = col;
+      rr(c, x - w, y - h * .35, w * 2, h * 1.15, r * .3); c.fill();
+      c.beginPath();
+      c.moveTo(x - w * .55, y - h * .3); c.lineTo(x - w * .3, y - h * 1.28);
+      c.lineTo(x + w * .36, y - h * 1.28); c.lineTo(x + w * .62, y - h * .3);
+      c.closePath(); c.fill(); c.shadowBlur = 0;
+      c.fillStyle = 'rgba(165,243,252,.72)';
+      c.beginPath();
+      c.moveTo(x - w * .42, y - h * .44); c.lineTo(x - w * .24, y - h * 1.12);
+      c.lineTo(x + w * .28, y - h * 1.12); c.lineTo(x + w * .46, y - h * .44);
+      c.closePath(); c.fill();
+      [[-w * .55], [w * .55]].forEach(d => {
+        c.fillStyle = '#12151d'; c.beginPath(); c.arc(x + d[0], y + h * .82, r * .32, 0, TAU); c.fill();
+        c.fillStyle = '#8b93a5'; c.beginPath(); c.arc(x + d[0], y + h * .82, r * .13, 0, TAU); c.fill();
+      });
+      break;
+    }
+    default: sphere(c, x, y, r, '#ffffff', col, '#222222', col);
+  }
+  c.restore();
+}
+
+/* ═══════════════ FONDO ESTRELLADO ═══════════════ */
+const sky = $('#skyCanvas');
+let skyCtx = null, skyW = 0, skyH = 0, stars = [], sh = null, shWait = 3200, skyRaf = 0, skyLast = 0, scrollY = 0;
+
+function skyFit() {
+  const d = dpr();
+  skyW = Math.max(1, window.innerWidth); skyH = Math.max(1, window.innerHeight);
+  sky.width = Math.round(skyW * d); sky.height = Math.round(skyH * d);
+  sky.style.width = skyW + 'px'; sky.style.height = skyH + 'px';
+  skyCtx = sky.getContext('2d'); skyCtx.setTransform(d, 0, 0, d, 0, 0);
+  const n = Math.round(clamp(skyW * skyH / 8200, 90, 260));
+  stars = [];
+  for (let i = 0; i < n; i++) {
+    const depth = Math.random();
+    stars.push({
+      x: Math.random() * skyW, y: Math.random() * skyH,
+      r: .32 + Math.pow(depth, 1.7) * 1.35,
+      a: .22 + Math.random() * .58,
+      tw: .35 + Math.random() * 1.7, ph: Math.random() * TAU, dp: .1 + depth * .55,
+      hue: Math.random() < .1 ? (Math.random() < .5 ? '#f2b441' : '#4ee0c8')
+         : Math.random() < .18 ? '#cfd8ff' : '#f1eee4'
+    });
+  }
+}
+
+function skyPaint(now) {
+  const c = skyCtx; if (!c) return;
+  c.clearRect(0, 0, skyW, skyH);
+  for (const s of stars) {
+    let y = REDUCED ? s.y : s.y - scrollY * s.dp * .32;
+    y = ((y % skyH) + skyH) % skyH;
+    const tw = REDUCED ? 1 : .6 + .4 * Math.sin(now * .001 * s.tw + s.ph);
+    c.globalAlpha = s.a * tw; c.fillStyle = s.hue;
+    c.beginPath(); c.arc(s.x, y, s.r, 0, TAU); c.fill();
+    if (s.r > 1.05) {
+      c.globalAlpha = s.a * tw * .18;
+      c.beginPath(); c.arc(s.x, y, s.r * 3.4, 0, TAU); c.fill();
+    }
+  }
+  c.globalAlpha = 1;
+}
+
+function skyShoot(dt) {
+  const c = skyCtx; if (!c) return;
+  if (!sh) {
+    shWait -= dt * 1000;
+    if (shWait <= 0) {
+      sh = { x: Math.random() * skyW * .72, y: Math.random() * skyH * .42,
+             vx: .40 + Math.random() * .22, vy: .15 + Math.random() * .09,
+             life: 0, max: 850 + Math.random() * 550 };
+      shWait = 9000 + Math.random() * 13000;
+    }
+    return;
+  }
+  sh.life += dt * 1000; sh.x += sh.vx * dt * 1000; sh.y += sh.vy * dt * 1000;
+  if (sh.life >= sh.max) { sh = null; return; }
+  const k = Math.sin(Math.PI * sh.life / sh.max);
+  const tx = sh.x - sh.vx * 150, ty = sh.y - sh.vy * 150;
+  const g = c.createLinearGradient(sh.x, sh.y, tx, ty);
+  g.addColorStop(0, 'rgba(255,247,224,' + (.9 * k).toFixed(3) + ')');
+  g.addColorStop(.45, 'rgba(180,220,255,' + (.32 * k).toFixed(3) + ')');
+  g.addColorStop(1, 'rgba(180,220,255,0)');
+  c.strokeStyle = g; c.lineWidth = 1.7; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(sh.x, sh.y); c.lineTo(tx, ty); c.stroke();
+  c.fillStyle = 'rgba(255,250,235,' + (.85 * k).toFixed(3) + ')';
+  c.beginPath(); c.arc(sh.x, sh.y, 1.5, 0, TAU); c.fill();
+}
+
+function skyFrame(ts) {
+  skyRaf = 0;
+  const dt = skyLast ? clamp((ts - skyLast) / 1000, 0, .06) : .016;
+  skyLast = ts;
+  skyPaint(ts); skyShoot(dt);
+  if (!document.hidden) skyRaf = requestAnimationFrame(skyFrame);
+}
+function skyStart() {
+  if (REDUCED || skyRaf || document.hidden) return;
+  skyLast = 0; skyRaf = requestAnimationFrame(skyFrame);
+}
+
+/* ═══════════════ REVELADO Y CONTADORES ═══════════════ */
+const rvIO = new IntersectionObserver(es => {
+  es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rvIO.unobserve(e.target); } });
+}, { rootMargin: '0px 0px -7% 0px', threshold: .05 });
+(function () {
+  const seen = new WeakMap();
+  $$('.rv').forEach(el => {
+    const p = el.parentElement;
+    const n = seen.get(p) || 0;
+    seen.set(p, n + 1);
+    if (n < 4 && !REDUCED) el.style.transitionDelay = (n * 80) + 'ms';
+    rvIO.observe(el);
+  });
+})();
+
+function countUp(el) {
+  const target = parseFloat(el.dataset.count);
+  const dec = parseInt(el.dataset.dec || '0', 10);
+  if (REDUCED) { el.textContent = target.toFixed(dec); return; }
+  const dur = 1500, t0 = performance.now();
+  (function f(now) {
+    const k = clamp((now - t0) / dur, 0, 1);
+    el.textContent = (target * (1 - Math.pow(1 - k, 3))).toFixed(dec);
+    if (k < 1) requestAnimationFrame(f);
+  })(t0);
+}
+
+/* ═══════════════ CHIP DE GRAVEDAD ═══════════════ */
+const gchip = $('#gchip'), gchipVal = $('#gchipVal'), gchipName = $('#gchipName');
+function setChip(key, live) {
+  const p = P[key]; if (!p) return;
+  gchipVal.textContent = p.g.toFixed(2);
+  gchipName.textContent = p.n + ' · m/s²';
+  gchip.classList.toggle('is-live', !!live);
+}
+
+/* ═══════════════ PESTAÑAS ═══════════════ */
+const tabs = $$('.tab');
+const panels = {};
+tabs.forEach(t => { panels[t.dataset.tab] = document.getElementById(t.getAttribute('aria-controls')); });
+let curView = null;
+
+function refitPanel(panel) {
+  $$('canvas', panel).forEach(cv => {
+    const o = Anim.list.find(l => l.cv === cv);
+    if (o) { o.ctx = fitCanvas(cv); o.draw(); } else fitCanvas(cv);
+  });
+}
+
+function selectTab(name, opts) {
+  opts = opts || {};
+  if (!panels[name] || (curView === name && !opts.force)) return;
+  const first = curView === null;
+  curView = name;
+  tabs.forEach(t => {
+    const on = t.dataset.tab === name;
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    t.tabIndex = on ? 0 : -1;
+    if (on && opts.focus) t.focus();
+  });
+  Object.keys(panels).forEach(k => {
+    const on = k === name;
+    panels[k].classList.toggle('is-on', on);
+    if (on) panels[k].removeAttribute('hidden'); else panels[k].setAttribute('hidden', '');
+  });
+  document.body.dataset.view = name;
+  refitPanel(panels[name]);
+  Anim.pump();
+  if (name === 'doc') spyNow();
+  if (!first && opts.scroll !== false) {
+    const y = $('#main').getBoundingClientRect().top + window.pageYOffset - 82;
+    if (window.pageYOffset > y + 6) window.scrollTo({ top: Math.max(0, y), behavior: REDUCED ? 'auto' : 'smooth' });
+  }
+  const act = tabs.find(t => t.dataset.tab === name);
+  if (act) act.scrollIntoView({ block: 'nearest', inline: 'center', behavior: REDUCED ? 'auto' : 'smooth' });
+}
+
+tabs.forEach(t => t.addEventListener('click', () => selectTab(t.dataset.tab, { scroll: true })));
+
+$('.nav__sc').addEventListener('keydown', e => {
+  const i = tabs.indexOf(document.activeElement);
+  if (i < 0) return;
+  let j = -1;
+  if (e.key === 'ArrowRight') j = (i + 1) % tabs.length;
+  else if (e.key === 'ArrowLeft') j = (i - 1 + tabs.length) % tabs.length;
+  else if (e.key === 'Home') j = 0;
+  else if (e.key === 'End') j = tabs.length - 1;
+  if (j < 0) return;
+  e.preventDefault();
+  selectTab(tabs[j].dataset.tab, { focus: true, scroll: true });
+});
+
+$$('[data-goto]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.goto, { focus: true, scroll: false })));
+
+/* ═══════════════ AYUDAS DE ESCENA ═══════════════ */
+const MONO = '"IBM Plex Mono", ui-monospace, monospace';
+const SANS = '"IBM Plex Sans", system-ui, sans-serif';
+
+function hexa(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+}
+function resRow(v, l) { return '<div><b>' + v + '</b><i>' + l + '</i></div>'; }
+
+function wireSeg(el, cb) {
+  const bs = $$('button', el);
+  bs.forEach(b => b.addEventListener('click', () => {
+    if (b.getAttribute('aria-pressed') === 'true') return;
+    bs.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    cb(b.dataset.air === 'si');
+  }));
+}
+
+/* superficie del planeta: banda de suelo + cielo teñido */
+function paintWorld(c, W, H, groundY, p, air) {
+  const bg = c.createLinearGradient(0, 0, 0, groundY);
+  bg.addColorStop(0, '#04060e');
+  bg.addColorStop(.72, 'rgba(7,11,24,.55)');
+  bg.addColorStop(1, hexa(p.pc, .16));
+  c.fillStyle = bg; c.fillRect(0, 0, W, groundY);
+
+  if (air) {
+    const ag = c.createLinearGradient(0, 0, 0, groundY);
+    ag.addColorStop(0, hexa(p.pc, 0));
+    ag.addColorStop(1, hexa(p.pc, .13));
+    c.fillStyle = ag; c.fillRect(0, 0, W, groundY);
+  }
+
+  const gg = c.createLinearGradient(0, groundY, 0, H);
+  gg.addColorStop(0, hexa(p.pc, .38));
+  gg.addColorStop(.42, hexa(p.c3, .82));
+  gg.addColorStop(1, '#04060e');
+  c.fillStyle = gg; c.fillRect(0, groundY, W, H - groundY);
+
+  c.strokeStyle = hexa(p.pc, .78); c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(0, groundY + .5); c.lineTo(W, groundY + .5); c.stroke();
+
+  c.fillStyle = hexa(p.pc, .2);
+  for (let i = 0; i < 30; i++) {
+    const x = ((i * 137) % 1000) / 1000 * W;
+    const y = groundY + 5 + ((i * 61) % 1000) / 1000 * Math.max(4, H - groundY - 9);
+    c.beginPath(); c.ellipse(x, y, 1 + (i % 3), .7 + (i % 2) * .6, 0, 0, TAU); c.fill();
+  }
+}
+
+/* ═══════════════ SIMULADOR DE CAÍDA LIBRE ═══════════════ */
+const simCv = $('#simCanvas');
+const simStage = $('#simStage'), simLive = $('#simLive'), simLiveT = $('#simLiveT');
+const simResult = $('#simResult'), simResultB = $('#simResultB');
+const simTels = $$('.tel', $('#tp-sim'));
+const dTime = $('#dataTime'), dVel = $('#dataVel'), dDist = $('#dataDist'), dAcc = $('#dataAccel');
+
+const S = { key:'tierra', obj:'pelota', h:50, air:false, t:0, y:0, v:0, a:9.8, run:false, done:false, trail:[], ts:1 };
+
+(function buildSimSelects() {
+  const sp = $('#simPlanet'), so = $('#simObject');
+  sp.innerHTML = PKEYS.map(k => '<option value="' + k + '">' + P[k].n + ' · ' + P[k].g + ' m/s²</option>').join('');
+  so.innerHTML = OKEYS.map(k => '<option value="' + k + '">' + O[k].n + '</option>').join('');
+  sp.value = S.key; so.value = S.obj;
+})();
+
+function syncSim() {
+  const p = P[S.key];
+  $('#simTag').textContent = p.n;
+  $('#simTagG').textContent = p.g.toFixed(2) + ' m/s²';
+  $('#simSw').style.setProperty('--pc', p.pc);
+}
+
+function simTel() {
+  setTel(dTime, S.t.toFixed(2));
+  setTel(dVel, S.v.toFixed(1));
+  setTel(dDist, S.y.toFixed(1));
+  setTel(dAcc, S.a.toFixed(1));
+}
+
+function simReset() {
+  S.t = 0; S.y = 0; S.v = 0; S.a = P[S.key].g;
+  S.run = false; S.done = false; S.trail.length = 0;
+  simLoop.on = false;
+  simStage.classList.remove('is-run');
+  simLive.classList.remove('on');
+  simResult.classList.remove('is-on');
+  simTels.forEach(t => t.classList.remove('is-hot'));
+  simTel(); setChip(S.key, false);
+  syncSim(); simLoop.draw();
+  Anim.pump();
+}
+
+function simGo() {
+  simReset();
+  S.run = true;
+  S.ts = clamp(fallTime(P[S.key].g, S.h, S.obj, S.air) / 6, 1, 14);
+  simStage.classList.add('is-run');
+  simLive.classList.add('on');
+  simLiveT.textContent = 'En caída' + (S.ts > 1.05 ? ' · ×' + S.ts.toFixed(0) : '');
+  simTels.forEach(t => t.classList.add('is-hot'));
+  setChip(S.key, true);
+  simLoop.on = true;
+  Anim.pump();
+}
+
+function simFinish() {
+  S.run = false; S.done = true;
+  simLoop.on = false;
+  simLive.classList.remove('on');
+  simTels.forEach(t => t.classList.remove('is-hot'));
+  setChip(S.key, false);
+  simTel();
+
+  const g = P[S.key].g, th = Math.sqrt(2 * S.h / g);
+  const dev = th > 0 ? Math.abs(S.t - th) / th * 100 : 0;
+  simResultB.innerHTML =
+    resRow(S.t.toFixed(2) + ' s', 'Tiempo medido en la simulación') +
+    resRow(th.toFixed(2) + ' s', 'Tiempo teórico · t = √(2h/g)') +
+    resRow(S.v.toFixed(1) + ' m/s', 'Velocidad en el impacto') +
+    resRow(dev.toFixed(1) + ' %', S.air ? 'Desviación por la resistencia del aire' : 'Sin aire: coincide con la teoría');
+  simResult.classList.add('is-on');
+  simLoop.draw();
+}
+
+function simStep(dt) {
+  if (!S.run) return;
+  const g = P[S.key].g, o = O[S.obj];
+  let rem = dt * S.ts;
+  while (rem > 0) {
+    const h = Math.min(.02, rem); rem -= h;
+    const acc = S.air ? Math.max(0, g - o.drag * S.v * S.v / (o.mass * 10)) : g;
+    S.v += acc * h; S.a = acc; S.y += S.v * h; S.t += h;
+    if (S.y >= S.h) { S.y = S.h; S.trail.push(S.y); simFinish(); return; }
+  }
+  S.trail.push(S.y);
+  if (S.trail.length > 24) S.trail.shift();
+  simTel(); simLoop.draw();
+}
+
+function simDraw() {
+  const c = simLoop.ctx, W = simCv._w, H = simCv._h;
+  const p = P[S.key], o = O[S.obj], r = objR(S.obj);
+  const groundY = H - 34, topY = 46, rulerX = 48;
+  const objX = Math.min(W * .56, W - 96);
+  const span = Math.max(40, groundY - r - topY);
+  const cy = topY + (S.y / S.h) * span;
+
+  c.clearRect(0, 0, W, H);
+  paintWorld(c, W, H, groundY, p, S.air);
+
+  /* regla de altura */
+  c.strokeStyle = 'rgba(241,238,228,.22)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(rulerX + .5, topY - 14); c.lineTo(rulerX + .5, groundY); c.stroke();
+  const stepM = niceStep(S.h / 6);
+  c.font = '10px ' + MONO; c.textAlign = 'right'; c.textBaseline = 'middle';
+  for (let m = 0; m <= S.h + 1e-9; m += stepM) {
+    const y = groundY - (m / S.h) * span;
+    if (y < topY - 14) break;
+    c.strokeStyle = 'rgba(241,238,228,.24)';
+    c.beginPath(); c.moveTo(rulerX - 6, y); c.lineTo(rulerX, y); c.stroke();
+    c.fillStyle = 'rgba(163,172,198,.72)';
+    c.fillText(String(Math.round(m * 10) / 10), rulerX - 10, y);
+  }
+
+  /* línea de salida */
+  c.save(); c.setLineDash([4, 5]);
+  c.strokeStyle = 'rgba(242,180,65,.38)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(rulerX, topY + .5); c.lineTo(W - 18, topY + .5); c.stroke();
+  c.restore();
+  c.fillStyle = 'rgba(242,180,65,.85)'; c.font = '10px ' + MONO;
+  c.textAlign = 'right'; c.textBaseline = 'bottom';
+  c.fillText('h = ' + S.h + ' m', W - 18, topY - 6);
+
+  /* guía de altitud */
+  if (S.y > .01 && S.y < S.h) {
+    c.save(); c.setLineDash([2, 4]);
+    c.strokeStyle = 'rgba(78,224,200,.32)'; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(rulerX, cy + .5); c.lineTo(objX - r - 8, cy + .5); c.stroke();
+    c.restore();
+    c.fillStyle = 'rgba(78,224,200,.9)'; c.font = '10px ' + MONO;
+    c.textAlign = 'left'; c.textBaseline = 'bottom';
+    c.fillText((S.h - S.y).toFixed(1) + ' m', rulerX + 6, cy - 3);
+  }
+
+  /* ráfagas de aire */
+  if (S.air && S.v > .4 && S.run) {
+    c.strokeStyle = 'rgba(180,205,255,.2)'; c.lineWidth = 1;
+    const len = clamp(S.v * 2, 8, 44);
+    for (let i = 0; i < 6; i++) {
+      const sx = objX - r * 1.15 + (i / 5) * r * 2.3;
+      const sy = cy - r - 8 - ((S.t * (110 + i * 26)) % 66);
+      c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx, sy - len); c.stroke();
+    }
+  }
+
+  /* sombra */
+  const alt = clamp((groundY - cy) / span, 0, 1);
+  c.save(); c.globalAlpha = .3 * (1 - alt * .72); c.fillStyle = '#000';
+  c.beginPath(); c.ellipse(objX, groundY - 1, r * (1.35 - alt * .6), Math.max(1, r * (.3 - alt * .12)), 0, 0, TAU); c.fill();
+  c.restore();
+
+  /* estela */
+  for (let i = 0; i < S.trail.length; i++) {
+    const k = (i + 1) / S.trail.length;
+    const ty = topY + (S.trail[i] / S.h) * span;
+    c.globalAlpha = k * .3; c.fillStyle = o.c;
+    c.beginPath(); c.arc(objX, ty, r * (.26 + k * .46), 0, TAU); c.fill();
+  }
+  c.globalAlpha = 1;
+
+  drawObj(c, S.obj, objX, cy, r, o.c);
+
+  /* onda de impacto */
+  if (S.done) {
+    c.strokeStyle = hexa(p.pc, .5); c.lineWidth = 1.4;
+    c.beginPath(); c.ellipse(objX, groundY - 1, r * 1.8, r * .44, 0, 0, TAU); c.stroke();
+    c.strokeStyle = hexa(p.pc, .25);
+    c.beginPath(); c.ellipse(objX, groundY - 1, r * 2.7, r * .66, 0, 0, TAU); c.stroke();
+  }
+
+  /* flecha de velocidad */
+  if (S.v > .08) {
+    const L = clamp(S.v * 3.2, 12, 72);
+    const ax = objX + r + 18;
+    c.strokeStyle = 'rgba(255,120,73,.9)'; c.fillStyle = 'rgba(255,120,73,.9)';
+    c.lineWidth = 2; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(ax, cy - L / 2); c.lineTo(ax, cy + L / 2 - 5); c.stroke();
+    c.beginPath();
+    c.moveTo(ax - 4.5, cy + L / 2 - 6); c.lineTo(ax + 4.5, cy + L / 2 - 6); c.lineTo(ax, cy + L / 2 + 1);
+    c.closePath(); c.fill();
+    c.font = '10px ' + MONO; c.textAlign = 'left'; c.textBaseline = 'middle';
+    c.fillStyle = 'rgba(255,160,120,.95)';
+    c.fillText(S.v.toFixed(1) + ' m/s', ax + 9, cy);
+  }
+
+  /* firma del suelo */
+  c.font = '9px ' + MONO; c.textAlign = 'right'; c.textBaseline = 'middle';
+  c.fillStyle = hexa(p.pc, .8);
+  c.fillText(p.n.toUpperCase() + (S.air ? ' · CON AIRE' : ' · VACÍO'), W - 14, groundY + 17);
+}
+
+const simLoop = Anim.register({ cv: simCv, draw: simDraw, step: simStep });
+
+$('#simPlanet').addEventListener('change', e => { S.key = e.target.value; simReset(); });
+$('#simObject').addEventListener('change', e => { S.obj = e.target.value; simReset(); });
+$('#simHeight').addEventListener('input', e => {
+  S.h = parseInt(e.target.value, 10);
+  $('#heightVal').textContent = S.h;
+  paintRange(e.target);
+  simReset();
+});
+wireSeg($('#simAir'), v => { S.air = v; simReset(); });
+$('#simGo').addEventListener('click', simGo);
+$('#simReset').addEventListener('click', simReset);
+
+/* ═══════════════ CARRERA DE OBJETOS ═══════════════ */
+const RACE_H = 50;
+const raceCv = $('#raceCanvas');
+const raceStage = $('#raceStage'), raceLive = $('#raceLive'), raceLiveT = $('#raceLiveT');
+const raceResult = $('#raceResult'), raceResultB = $('#raceResultB');
+
+const R = {
+  key: 'tierra', a: 'pelota', b: 'pluma', air: false,
+  phase: 'idle', cd: 3, flash: 0, ts: 1,
+  lanes: [{ k: 'pelota', y: 0, v: 0, t: 0, done: false, trail: [] },
+          { k: 'pluma',   y: 0, v: 0, t: 0, done: false, trail: [] }]
+};
+
+function syncRace() {
+  const p = P[R.key];
+  $('#raceTag').textContent = p.n;
+  $('#raceTagG').textContent = p.g.toFixed(2) + ' m/s²';
+  $('#raceSw').style.setProperty('--pc', p.pc);
+}
+
+function raceReset() {
+  R.phase = 'idle'; R.cd = 3; R.flash = 0;
+  R.lanes = [{ k: R.a, y: 0, v: 0, t: 0, done: false, trail: [] },
+             { k: R.b, y: 0, v: 0, t: 0, done: false, trail: [] }];
+  raceLoop.on = false;
+  raceStage.classList.remove('is-run');
+  raceLive.classList.remove('on');
+  raceResult.classList.remove('is-on');
+  setChip(R.key, false);
+  syncRace(); raceLoop.draw();
+  Anim.pump();
+}
+
+function raceGo() {
+  raceReset();
+  const g = P[R.key].g;
+  R.ts = clamp(Math.max(fallTime(g, RACE_H, R.a, R.air), fallTime(g, RACE_H, R.b, R.air)) / 6, 1, 14);
+  raceStage.classList.add('is-run');
+  raceLive.classList.add('on');
+  setChip(R.key, true);
+  if (REDUCED) { R.phase = 'run'; raceLiveT.textContent = 'En carrera'; }
+  else { R.phase = 'count'; raceLiveT.textContent = 'Cuenta atrás'; }
+  raceLoop.on = true;
+  Anim.pump();
+}
+
+function raceFinish() {
+  R.phase = 'done'; R.flash = 0;
+  raceLoop.on = false;
+  raceLive.classList.remove('on');
+  setChip(R.key, false);
+
+  const A = R.lanes[0], B = R.lanes[1];
+  const tie = Math.abs(A.t - B.t) < .02;
+  raceResultB.innerHTML =
+    resRow(A.t.toFixed(2) + ' s', 'Carril A · ' + O[A.k].n) +
+    resRow(B.t.toFixed(2) + ' s', 'Carril B · ' + O[B.k].n) +
+    resRow(tie ? 'Empate' : 'Δ ' + Math.abs(A.t - B.t).toFixed(2) + ' s',
+           tie ? 'Sin aire todos los objetos caen igual' : 'Diferencia entre carriles') +
+    resRow(tie ? 'Los dos a la vez' : O[A.t < B.t ? A.k : B.k].n,
+           'Ganador · ' + (R.air ? 'con aire' : 'en el vacío'));
+  raceResult.classList.add('is-on');
+  raceLoop.draw();
+}
+
+function raceStep(dt) {
+  if (R.flash > 0) R.flash -= dt;
+
+  if (R.phase === 'count') {
+    R.cd -= dt;
+    if (R.cd <= 0) {
+      R.phase = 'run'; R.flash = .9;
+      raceLiveT.textContent = 'En carrera' + (R.ts > 1.05 ? ' · ×' + R.ts.toFixed(0) : '');
+    }
+    raceLoop.draw();
+    return;
+  }
+  if (R.phase !== 'run') return;
+
+  const g = P[R.key].g;
+  let rem = dt * R.ts;
+  while (rem > 0) {
+    const h = Math.min(.02, rem); rem -= h;
+    R.lanes.forEach(L => {
+      if (L.done) return;
+      const o = O[L.k];
+      const acc = R.air ? Math.max(0, g - o.drag * L.v * L.v / (o.mass * 10)) : g;
+      L.v += acc * h; L.y += L.v * h; L.t += h;
+      if (L.y >= RACE_H) { L.y = RACE_H; L.done = true; }
+    });
+    if (R.lanes[0].done && R.lanes[1].done) break;
+  }
+  R.lanes.forEach(L => {
+    if (!L.done) { L.trail.push(L.y); if (L.trail.length > 20) L.trail.shift(); }
+  });
+  if (R.lanes[0].done && R.lanes[1].done) raceFinish();
+  else raceLoop.draw();
+}
+
+function raceDraw() {
+  const c = raceLoop.ctx, W = raceCv._w, H = raceCv._h;
+  const p = P[R.key];
+  const groundY = H - 40, topY = 54;
+  const span = Math.max(40, groundY - 20 - topY);
+  const lx = [W * .29, W * .71];
+
+  c.clearRect(0, 0, W, H);
+  paintWorld(c, W, H, groundY, p, R.air);
+
+  /* rejilla de altura */
+  c.font = '9px ' + MONO; c.textBaseline = 'middle'; c.textAlign = 'left';
+  for (let m = 0; m <= RACE_H; m += 10) {
+    const y = groundY - (m / RACE_H) * span;
+    c.strokeStyle = m ? 'rgba(241,238,228,.07)' : 'rgba(241,238,228,.26)';
+    c.lineWidth = 1;
+    c.beginPath(); c.moveTo(30, y + .5); c.lineTo(W - 12, y + .5); c.stroke();
+    c.fillStyle = 'rgba(115,125,153,.85)';
+    c.fillText(m + ' m', 4, y);
+  }
+
+  /* separador */
+  c.save(); c.setLineDash([3, 6]);
+  c.strokeStyle = 'rgba(241,238,228,.15)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(Math.round(W * .5) + .5, 44); c.lineTo(Math.round(W * .5) + .5, groundY); c.stroke();
+  c.restore();
+
+  for (let i = 0; i < 2; i++) {
+    const L = R.lanes[i], o = O[L.k], r = objR(L.k);
+    const col = i ? '#4ee0c8' : '#f2b441';
+    const cy = topY + (L.y / RACE_H) * span;
+
+    /* cabecera de carril */
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.font = '600 11.5px ' + SANS; c.fillStyle = '#f1eee4';
+    c.fillText((i ? 'B' : 'A') + ' · ' + o.n, lx[i], 18);
+    c.font = '600 12px ' + MONO; c.fillStyle = L.done ? col : 'rgba(163,172,198,.9)';
+    c.fillText(L.t.toFixed(2) + ' s', lx[i], 33);
+    c.fillStyle = hexa(col, L.done ? .8 : .38);
+    rr(c, lx[i] - 17, 41, 34, 2, 1); c.fill();
+
+    /* estela */
+    for (let j = 0; j < L.trail.length; j++) {
+      const k = (j + 1) / L.trail.length;
+      c.globalAlpha = k * .28; c.fillStyle = o.c;
+      c.beginPath(); c.arc(lx[i], topY + (L.trail[j] / RACE_H) * span, r * (.24 + k * .44), 0, TAU); c.fill();
+    }
+    c.globalAlpha = 1;
+
+    /* sombra */
+    const alt = clamp((groundY - cy) / span, 0, 1);
+    c.save(); c.globalAlpha = .28 * (1 - alt * .7); c.fillStyle = '#000';
+    c.beginPath(); c.ellipse(lx[i], groundY - 1, r * (1.3 - alt * .55), Math.max(1, r * (.28 - alt * .1)), 0, 0, TAU); c.fill();
+    c.restore();
+
+    drawObj(c, L.k, lx[i], cy, r, o.c);
+
+    if (L.done) {
+      c.strokeStyle = hexa(col, .6); c.lineWidth = 1.4;
+      c.beginPath(); c.ellipse(lx[i], groundY - 1, r * 1.75, r * .44, 0, 0, TAU); c.stroke();
+      c.font = '9px ' + MONO; c.textAlign = 'center'; c.textBaseline = 'top';
+      c.fillStyle = hexa(col, .95);
+      c.fillText('IMPACTO', lx[i], groundY + 8);
+    }
+  }
+
+  /* cuenta atrás */
+  if (R.phase === 'count' || R.flash > 0) {
+    const midY = (topY + groundY) / 2;
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    if (R.phase === 'count') {
+      const n = Math.max(1, Math.ceil(R.cd));
+      const frac = clamp(1 - (R.cd - Math.floor(R.cd)), 0, 1);
+      c.save();
+      c.globalAlpha = clamp(1.25 - frac, 0, 1);
+      c.font = '700 ' + (56 + frac * 18).toFixed(0) + 'px ' + MONO;
+      c.fillStyle = '#f2b441'; c.shadowColor = 'rgba(242,180,65,.55)'; c.shadowBlur = 26;
+      c.fillText(String(n), W / 2, midY);
+      c.restore();
+      c.font = '10px ' + MONO; c.fillStyle = 'rgba(163,172,198,.7)';
+      c.fillText('PREPARADOS', W / 2, midY + 54);
+    } else {
+      const k = clamp(R.flash / .9, 0, 1);
+      c.save();
+      c.globalAlpha = k;
+      c.font = '700 ' + (44 + (1 - k) * 20).toFixed(0) + 'px ' + MONO;
+      c.fillStyle = '#4ee0c8'; c.shadowColor = 'rgba(78,224,200,.6)'; c.shadowBlur = 28;
+      c.fillText('¡YA!', W / 2, midY);
+      c.restore();
+    }
+  }
+
+  c.font = '9px ' + MONO; c.textAlign = 'right'; c.textBaseline = 'middle';
+  c.fillStyle = hexa(p.pc, .8);
+  c.fillText(p.n.toUpperCase() + ' · ' + RACE_H + ' M', W - 14, groundY + 19);
+}
+
+const raceLoop = Anim.register({ cv: raceCv, draw: raceDraw, step: raceStep });
+
+$('#racePlanet').addEventListener('change', e => { R.key = e.target.value; raceReset(); });
+$('#raceObjA').addEventListener('change', e => { R.a = e.target.value; raceReset(); });
+$('#raceObjB').addEventListener('change', e => { R.b = e.target.value; raceReset(); });
+wireSeg($('#raceAir'), v => { R.air = v; raceReset(); });
+$('#raceGo').addEventListener('click', raceGo);
+$('#raceReset').addEventListener('click', raceReset);
+
+/* ═══════════════ CATÁLOGO DE PLANETAS ═══════════════ */
+let selectedPlanet = 'tierra';
+function buildPlanets() {
+  const grid = $('#planetGrid');
+  grid.innerHTML = PKEYS.map(k => {
+    const p=P[k], width=Math.min(100,p.g/24.8*100);
+    return '<button type="button" class="pcard" data-planet="'+k+'" aria-pressed="'+(k==='tierra')+'" style="--pc:'+p.pc+';--c1:'+p.c1+';--c2:'+p.c2+';--c3:'+p.c3+';--gl:'+hexa(p.pc,.22)+'">'+
+      (p.ring?'<span class="pcard__badge">Anillos</span>':'')+'<span class="pcard__sph"><span class="sphere'+(p.ring?' sphere--ring':'')+'" style="--c1:'+p.c1+';--c2:'+p.c2+';--c3:'+p.c3+';--gl:'+hexa(p.pc,.34)+';--rc:'+hexa(p.pc,.62)+'"></span></span><span class="pcard__n">'+p.n+'</span><span class="pcard__g"><b>'+p.g.toFixed(1)+'</b> m/s²</span><span class="meter"><i style="width:'+width+'%"></i></span></button>';
+  }).join('');
+  grid.addEventListener('click', e => { const b=e.target.closest('[data-planet]'); if(b) selectPlanet(b.dataset.planet); });
+  const mass=$('#userWeight');
+  mass.addEventListener('input', () => { $('#userWeightVal').textContent=mass.value+' kg'; updateWeight(); });
+  selectPlanet('tierra');
+}
+function selectPlanet(k) {
+  if (!P[k]) return; selectedPlanet=k;
+  $$('.pcard', $('#planetGrid')).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.planet===k)));
+  const p=P[k]; $('#weightResult').firstChild.textContent=(Number($('#userWeight').value)*p.g).toFixed(1);
+  $('#gResult').firstChild.textContent=p.g.toFixed(1);
+  $('#compBars').innerHTML=PKEYS.map(key=>'<div class="bar'+(key===k?' is-sel':'')+'" style="--pc:'+P[key].pc+'"><div class="bar__n"><i class="sw"></i><span>'+P[key].n+'</span></div><div class="bar__t"><i style="width:'+Math.min(100,P[key].g/24.8*100)+'%"></i></div><div class="bar__v">'+P[key].g.toFixed(1)+' m/s²</div></div>').join('');
+  $$('#compTableBody tr').forEach(row=>row.classList.toggle('is-sel',row.dataset.planet===k));
+}
+function updateWeight(){const p=P[selectedPlanet];$('#weightResult').firstChild.textContent=(Number($('#userWeight').value)*p.g).toFixed(1);}
+
+/* ═══════════════ QUIZ ═══════════════ */
+const QUESTIONS=[
+ ['¿Qué describe la aceleración de la gravedad cerca de la superficie terrestre?',['9.8 m/s²','9.8 km/s','1.6 m/s²','24.8 m/s²'],0,'En la Tierra, la aceleración gravitatoria es aproximadamente 9.8 m/s².'],
+ ['En el vacío, ¿qué ocurre al soltar una pluma y una pelota desde la misma altura?',['La pelota llega primero','La pluma llega primero','Llegan al mismo tiempo','Ninguna cae'],2,'Sin resistencia del aire, ambos objetos tienen la misma aceleración.'],
+ ['¿De qué depende el peso de una persona?',['Solo de su altura','De su masa y la gravedad local','Solo del planeta','De su velocidad'],1,'El peso es la fuerza gravitatoria: masa × gravedad.'],
+ ['¿Cuál es la unidad de fuerza en el Sistema Internacional?',['Kilogramo','Metro','Newton','Julio'],2,'El newton (N) es la unidad de fuerza.'],
+ ['¿Qué sucede con la gravedad al aumentar la distancia a una masa?',['Aumenta','Disminuye','No cambia','Se vuelve cero inmediatamente'],1,'La intensidad gravitatoria disminuye con la distancia.'],
+ ['¿Cuál de estos cuerpos tiene menor gravedad superficial?',['Júpiter','Tierra','Luna','Neptuno'],2,'La gravedad superficial lunar es aproximadamente 1.6 m/s².'],
+ ['¿Qué fuerza frena más a una pluma durante su caída en el aire?',['Magnetismo','Resistencia del aire','Empuje del suelo','Fricción con la luz'],1,'Su gran área respecto a su masa hace que el aire la frene mucho.'],
+ ['¿Qué representa g = GM/r²?',['Campo gravitacional de una masa','Velocidad de la luz','Masa de un planeta','Energía térmica'],0,'La expresión calcula el campo gravitatorio a distancia r de una masa M.'],
+ ['Si duplicas la masa y mantienes la misma gravedad, ¿qué ocurre con el peso?',['Se duplica','Se reduce a la mitad','No cambia','Se cuadruplica'],0,'Como peso = masa × gravedad, al duplicar la masa se duplica el peso.'],
+ ['¿Por qué la Luna permanece en órbita alrededor de la Tierra?',['No actúa ninguna fuerza','La gravedad curva su trayectoria','La Luna está quieta','La atmósfera la sostiene'],1,'Su movimiento hacia adelante junto con la atracción gravitatoria mantiene la órbita.']
+];
+let qIndex=0,qScore=0,qAnswered=false,qAnswers=[];
+function renderQuestion(){
+  const q=QUESTIONS[qIndex]; qAnswered=false;
+  $('#qNow').textContent=qIndex+1; $('#qTotal').textContent=QUESTIONS.length; $('#qText').textContent=q[0]; $('#qScore').textContent=qScore+' aciertos';
+  $('#qOpts').innerHTML=q[1].map((s,i)=>'<button class="opt" type="button" data-answer="'+i+'"><span class="opt__k">'+(i+1)+'</span><span>'+s+'</span></button>').join('');
+  $('#qProg').innerHTML=QUESTIONS.map((_,i)=>'<i class="'+(i===qIndex?'cur':i<qIndex?(qAnswers[i]?'ok':'no'):'')+'"></i>').join('');
+  $('#qFb').className='quiz__fb'; $('#qFb').textContent=''; $('#qNext').hidden=true;
+  $('#qOpts').onclick=e=>{const b=e.target.closest('[data-answer]');if(b) answerQuestion(Number(b.dataset.answer));};
+}
+function answerQuestion(n){if(qAnswered)return;qAnswered=true;const q=QUESTIONS[qIndex],ok=n===q[2];qAnswers[qIndex]=ok;if(ok)qScore++;
+  $$('.opt',$('#qOpts')).forEach((b,i)=>{b.disabled=true;b.classList.toggle('ok',i===q[2]);b.classList.toggle('bad',i===n&&!ok);b.classList.toggle('dim',i!==n&&i!==q[2]);});
+  const fb=$('#qFb');fb.className='quiz__fb show '+(ok?'ok':'bad');fb.innerHTML='<svg class="ic"><use href="#'+(ok?'i-check':'i-info')+'"/></svg><span><strong>'+(ok?'¡Correcto!':'Revisa este concepto.')+'</strong> '+q[3]+'</span>';
+  $('#qScore').textContent=qScore+' aciertos';$('#qProg').children[qIndex].className=ok?'ok':'no';$('#qNext').hidden=false;$('#qNext').textContent=qIndex===QUESTIONS.length-1?'Ver resultados':'Siguiente';
+}
+function showScore(){
+  $('#quizBox').hidden=true;$('#scoreBox').hidden=false;const pct=Math.round(qScore/QUESTIONS.length*100),circ=2*Math.PI*85;
+  $('#scorePct').textContent=pct+'%';$('#scoreOf').textContent=qScore+' de '+QUESTIONS.length;$('#scoreArc').style.strokeDasharray=circ;$('#scoreArc').style.strokeDashoffset=circ*(1-qScore/QUESTIONS.length);
+  $('#scoreMsg').textContent=pct>=80?'¡Excelente trabajo!':pct>=50?'Vas por buen camino':'Sigue explorando';$('#scoreSub').textContent='Respondiste correctamente '+qScore+' de '+QUESTIONS.length+' preguntas.';
+  $('#scoreRev').innerHTML=QUESTIONS.map((q,i)=>'<div class="rev '+(qAnswers[i]?'ok':'bad')+'"><svg class="ic"><use href="#'+(qAnswers[i]?'i-check':'i-info')+'"/></svg><div><b>'+q[0]+'</b><span>'+q[1][q[2]]+' — '+q[3]+'</span></div></div>').join('');
+}
+$('#qNext').addEventListener('click',()=>{if(!qAnswered)return;if(qIndex<QUESTIONS.length-1){qIndex++;renderQuestion();}else showScore();});
+$('#scoreRetry').addEventListener('click',()=>{qIndex=0;qScore=0;qAnswers=[];$('#scoreBox').hidden=true;$('#quizBox').hidden=false;renderQuestion();});
+document.addEventListener('keydown',e=>{if(document.body.dataset.view!=='quiz'||!qAnswered&&e.target.matches('input,select,textarea'))return;if(!qAnswered&&['1','2','3','4'].includes(e.key))answerQuestion(Number(e.key)-1);else if(qAnswered&&e.key==='Enter')$('#qNext').click();});
+
+/* ═══════════════ TABLA Y NAVEGACIÓN DEL DOCUMENTO ═══════════════ */
+function buildPlanetTable(){const body=$('#compTableBody');body.innerHTML=PKEYS.map(k=>'<tr data-planet="'+k+'"><td><i class="dot" style="--pc:'+P[k].pc+'"></i>'+P[k].n+'</td><td>'+P[k].g.toFixed(1)+'</td><td>'+((P[k].g/9.8)*100).toFixed(0)+'%</td><td>'+(50*P[k].g).toFixed(1)+' N</td><td>'+Math.sqrt(100/P[k].g).toFixed(2)+' s</td></tr>').join('');}
+const tocLinks=$$('.doc__toc a');
+function spyNow(){const y=window.scrollY+130;let current='d-info';$$('.dochead[id],.docsec[id]').forEach(el=>{if(el.getBoundingClientRect().top+window.scrollY<=y)current=el.id;});tocLinks.forEach(a=>{const on=a.hash==='#'+current;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});}
+tocLinks.forEach(a=>a.addEventListener('click',e=>{const target=$(a.hash);if(!target)return;e.preventDefault();target.scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'});history.replaceState(null,'',a.hash);}));
+let spyQueued=false;window.addEventListener('scroll',()=>{if(!spyQueued){spyQueued=true;requestAnimationFrame(()=>{spyQueued=false;spyNow();});}},{passive:true});
+
+/* ═══════════════ EXPERIMENTOS INTERACTIVOS ═══════════════ */
+const expState={capOpen:false,water:1,cg:true,sheet:false,angle:0,phase:0};
+function expCanvas(id,draw,advance){const cv=$('#'+id);const obj=Anim.register({cv,draw(){draw(this.ctx,cv._w,cv._h);},step(dt){expState.phase+=dt;if(advance)advance(dt);this.draw();}});return obj;}
+const BOTTLE_HOLE_LEVEL=.17;
+const bottleLoop=expCanvas('expBottle',(c,w,h)=>{
+ c.clearRect(0,0,w,h);const cx=w/2,bw=w*.46,top=h*.17,bottom=h*.83,bodyTop=top+h*.15,neckW=bw*.36,neckTop=top-h*.015,neckBottom=top+h*.13,right=cx+bw/2,holeY=bottom-(bottom-bodyTop)*BOTTLE_HOLE_LEVEL,waterY=bottom-(bottom-bodyTop)*expState.water,waterAtHole=waterY<holeY-1;
+ const g=c.createLinearGradient(0,top,0,bottom);g.addColorStop(0,'rgba(78,224,200,.68)');g.addColorStop(1,'rgba(18,137,122,.9)');
+ c.save();c.beginPath();c.roundRect(cx-bw/2,bodyTop,bw,bottom-bodyTop,12);c.clip();c.fillStyle='#10182b';c.fillRect(cx-bw/2,bodyTop,bw,bottom-bodyTop);c.fillStyle=g;c.fillRect(cx-bw/2,waterY,bw,bottom-waterY);
+ c.strokeStyle='rgba(210,255,248,.48)';c.lineWidth=1.5;c.beginPath();c.moveTo(cx-bw*.43,waterY);c.lineTo(cx+bw*.43,waterY);c.stroke();c.restore();
+ c.strokeStyle='rgba(163,172,198,.94)';c.lineWidth=3;c.beginPath();c.roundRect(cx-bw/2,bodyTop,bw,bottom-bodyTop,12);c.stroke();
+ // Cuello, boca y tapa superior; el orificio lateral se mantiene siempre descubierto.
+ c.fillStyle='#10182b';c.strokeStyle='rgba(163,172,198,.94)';c.lineWidth=2.5;c.beginPath();c.roundRect(cx-neckW/2,neckTop,neckW,neckBottom-neckTop,4);c.fill();c.stroke();
+ c.strokeStyle='rgba(163,172,198,.94)';c.lineWidth=3;c.beginPath();c.moveTo(cx-bw/2+2,bodyTop+8);c.quadraticCurveTo(cx-bw*.39,top+h*.08,cx-neckW/2,neckBottom);c.moveTo(cx+bw/2-2,bodyTop+8);c.quadraticCurveTo(cx+bw*.39,top+h*.08,cx+neckW/2,neckBottom);c.stroke();
+ c.beginPath();c.ellipse(cx,neckTop,neckW*.5,4,0,0,TAU);c.fillStyle=expState.capOpen?'#07101d':'#f2b441';c.fill();c.strokeStyle=expState.capOpen?'#4ee0c8':'#ffe0a0';c.lineWidth=2;c.stroke();
+ if(expState.capOpen){c.save();c.translate(cx+neckW*.7,neckTop-8);c.rotate(.36);c.fillStyle='#c98b25';c.strokeStyle='#ffe0a0';c.lineWidth=1.5;c.beginPath();c.roundRect(-neckW*.42,-5,neckW*.84,10,3);c.fill();c.stroke();c.restore();}
+ else{c.fillStyle='#d69a2c';c.strokeStyle='#ffe0a0';c.lineWidth=1.5;c.beginPath();c.roundRect(cx-neckW*.56,neckTop-8,neckW*1.12,11,3);c.fill();c.stroke();c.strokeStyle='rgba(79,48,7,.55)';c.lineWidth=1;c.beginPath();c.moveTo(cx-neckW*.4,neckTop-3);c.lineTo(cx+neckW*.4,neckTop-3);c.stroke();}
+ // Chorro lateral: solo aparece si la tapa de arriba está abierta y el nivel cubre el orificio.
+ if(expState.capOpen&&waterAtHole){const pulse=REDUCED ? .9 : .76+.14*Math.sin(expState.phase*8);const jet=c.createLinearGradient(right,holeY,right+Math.max(34,w*.24),holeY+Math.max(26,h*.1));jet.addColorStop(0,'rgba(78,224,200,'+pulse+')');jet.addColorStop(1,'rgba(78,224,200,.12)');c.strokeStyle=jet;c.lineWidth=5;c.lineCap='round';c.beginPath();c.moveTo(right-1,holeY);c.quadraticCurveTo(right+w*.12,holeY-2,right+w*.22,holeY+h*.075);c.stroke();c.strokeStyle='rgba(216,255,250,.9)';c.lineWidth=1.2;c.beginPath();c.moveTo(right+3,holeY-1);c.quadraticCurveTo(right+w*.12,holeY+1,right+w*.21,holeY+h*.072);c.stroke();}
+ c.fillStyle='#07101d';c.beginPath();c.arc(right,holeY,6,0,TAU);c.fill();c.strokeStyle='#4ee0c8';c.lineWidth=2.5;c.beginPath();c.arc(right,holeY,6,0,TAU);c.stroke();
+ c.fillStyle='#dbeafe';c.font='10px '+MONO;c.textAlign='center';c.fillText(!expState.capOpen?'TAPA SUPERIOR CERRADA · SIN FLUJO':waterAtHole?'TAPA ABIERTA · FLUJO LATERAL':'TAPA ABIERTA · NIVEL BAJO',cx,h*.95);
+},dt=>{if(expState.capOpen){expState.water=Math.max(BOTTLE_HOLE_LEVEL,expState.water-dt*.14);if(expState.water<=BOTTLE_HOLE_LEVEL){expState.water=BOTTLE_HOLE_LEVEL;bottleLoop.on=false;Anim.pump();}}});
+$('#bottleBtn').addEventListener('click',()=>{expState.capOpen=!expState.capOpen;$('#bottleBtn').setAttribute('aria-pressed',String(expState.capOpen));
+ $('#bottleBtn').innerHTML='<svg class="ic"><use href="#'+(expState.capOpen?'i-lock':'i-unlock')+'"/></svg>'+(expState.capOpen?'Tapar tapa':'Destapar tapa');
+ bottleLoop.on=expState.capOpen&&expState.water>BOTTLE_HOLE_LEVEL;bottleLoop.draw();Anim.pump();});
+$('#bottleReset').addEventListener('click',()=>{expState.capOpen=false;expState.water=1;bottleLoop.on=false;$('#bottleBtn').setAttribute('aria-pressed','false');$('#bottleBtn').innerHTML='<svg class="ic"><use href="#i-unlock"/></svg>Destapar tapa';bottleLoop.draw();});
+const cgLoop=expCanvas('expCG',(c,w,h)=>{
+ c.clearRect(0,0,w,h);const cx=w*.5,cupX=cx+w*.12,cupTop=h*.61,cupBottom=h*.91,halfTop=w*.155,halfBottom=w*.12;
+ // Vaso transparente: boca elíptica, paredes inclinadas y base curva.
+ const glass=c.createLinearGradient(cupX-halfTop,0,cupX+halfTop,0);glass.addColorStop(0,'rgba(78,224,200,.05)');glass.addColorStop(.5,'rgba(78,224,200,.16)');glass.addColorStop(1,'rgba(78,224,200,.04)');
+ c.beginPath();c.moveTo(cupX-halfTop,cupTop);c.lineTo(cupX-halfBottom,cupBottom-h*.025);c.quadraticCurveTo(cupX,cupBottom+h*.01,cupX+halfBottom,cupBottom-h*.025);c.lineTo(cupX+halfTop,cupTop);c.closePath();c.fillStyle=glass;c.fill();
+ c.strokeStyle='rgba(173,212,224,.9)';c.lineWidth=2.4;c.beginPath();c.moveTo(cupX-halfTop,cupTop);c.lineTo(cupX-halfBottom,cupBottom-h*.025);c.quadraticCurveTo(cupX,cupBottom+h*.01,cupX+halfBottom,cupBottom-h*.025);c.lineTo(cupX+halfTop,cupTop);c.stroke();
+ c.strokeStyle='rgba(195,224,237,.9)';c.lineWidth=2;c.beginPath();c.ellipse(cupX,cupTop,halfTop,h*.035,0,0,TAU);c.stroke();c.beginPath();c.ellipse(cupX,cupBottom-h*.025,halfBottom,h*.027,0,0,TAU);c.stroke();
+ const supportX=cupX-halfTop*.82,supportY=cupTop,jointX=cx-w*.055,jointY=h*.43;
+ // Palillo: pieza de madera desde el nudo de los cubiertos hasta el borde del vaso.
+ c.save();c.lineCap='round';c.strokeStyle='rgba(0,0,0,.38)';c.lineWidth=9;c.beginPath();c.moveTo(jointX+3,jointY+4);c.lineTo(supportX,supportY);c.stroke();c.strokeStyle='#d6a95f';c.lineWidth=5;c.beginPath();c.moveTo(jointX,jointY);c.lineTo(supportX,supportY);c.stroke();c.strokeStyle='#ffe0a0';c.lineWidth=1.2;c.beginPath();c.moveTo(jointX-1,jointY);c.lineTo(supportX-1,supportY-1);c.stroke();c.restore();
+ // Cuchara a la izquierda: cuenco ovalado reconocible y mango largo.
+ const spoonX=cx-w*.27,spoonY=h*.25,metal=c.createLinearGradient(spoonX-w*.05,0,spoonX+w*.05,0);metal.addColorStop(0,'#768499');metal.addColorStop(.38,'#f0f5fa');metal.addColorStop(.72,'#a7b4c4');metal.addColorStop(1,'#5e6c80');
+ c.save();c.lineCap='round';c.strokeStyle='rgba(0,0,0,.38)';c.lineWidth=13;c.beginPath();c.moveTo(spoonX+5,spoonY+h*.09);c.lineTo(jointX,jointY);c.stroke();c.strokeStyle=metal;c.lineWidth=9;c.beginPath();c.moveTo(spoonX+5,spoonY+h*.09);c.lineTo(jointX,jointY);c.stroke();
+ c.fillStyle=metal;c.strokeStyle='#d9e2eb';c.lineWidth=1.5;c.beginPath();c.ellipse(spoonX,spoonY,w*.047,h*.09,-.22,0,TAU);c.fill();c.stroke();c.beginPath();c.ellipse(spoonX-w*.008,spoonY-h*.01,w*.026,h*.055,-.22,0,TAU);c.stroke();c.restore();
+ // Tenedor a la derecha: mango, cuello y cuatro puntas separadas.
+ const forkX=cx+w*.22,forkY=h*.22;
+ c.save();c.lineCap='round';c.strokeStyle='rgba(0,0,0,.4)';c.lineWidth=12;c.beginPath();c.moveTo(forkX-w*.035,forkY+h*.20);c.lineTo(jointX+2,jointY+2);c.stroke();c.strokeStyle=metal;c.lineWidth=8;c.beginPath();c.moveTo(forkX-w*.035,forkY+h*.20);c.lineTo(jointX+2,jointY+2);c.stroke();
+ c.strokeStyle='#dce6ef';c.lineWidth=3;c.beginPath();c.moveTo(forkX-w*.075,forkY+h*.15);c.quadraticCurveTo(forkX-w*.035,forkY+h*.18,forkX+w*.005,forkY+h*.15);c.stroke();
+ for(let i=0;i<4;i++){const tx=forkX-w*.068+i*w*.022;c.lineWidth=2.4;c.beginPath();c.moveTo(tx,forkY+h*.15);c.lineTo(tx+(i-1.5)*1.2,forkY);c.stroke();}
+ c.restore();
+ // Unión visible de las piezas y punto de apoyo sobre el borde.
+ c.fillStyle='#f2b441';c.beginPath();c.arc(jointX,jointY,5,0,TAU);c.fill();c.fillStyle='#ffe0a0';c.beginPath();c.arc(supportX,supportY,4,0,TAU);c.fill();
+ c.fillStyle='rgba(241,238,228,.86)';c.font='10px '+MONO;c.textAlign='center';c.fillText('PALILLO',supportX-w*.04,supportY+h*.055);c.fillText('VASO',cupX,cupBottom+h*.055);c.fillText('CUCHARA',spoonX,spoonY+h*.15);c.fillText('TENEDOR',forkX,forkY+h*.23);
+ if(expState.cg){const markY=cupTop+h*.13;c.save();c.setLineDash([4,4]);c.strokeStyle='#4ee0c8';c.lineWidth=1.7;c.beginPath();c.moveTo(supportX,supportY+5);c.lineTo(supportX,markY-8);c.stroke();c.restore();c.fillStyle='#4ee0c8';c.shadowColor='#4ee0c8';c.shadowBlur=12;c.beginPath();c.arc(supportX,markY,6,0,TAU);c.fill();c.shadowBlur=0;c.fillStyle='#4ee0c8';c.font='9px '+MONO;c.textAlign='left';c.fillText('CENTRO DE GRAVEDAD',supportX+10,markY+3);}
+});
+$('#cgBtn').addEventListener('click',e=>{expState.cg=!expState.cg;e.currentTarget.setAttribute('aria-pressed',String(expState.cg));e.currentTarget.innerHTML='<svg class="ic"><use href="#i-target"/></svg>'+(expState.cg?'Ocultar':'Mostrar')+' centro de gravedad';cgLoop.draw();});
+const sheetLoop=expCanvas('expSheet',(c,w,h)=>{
+ c.clearRect(0,0,w,h);const cx=w*.5,cy=h*.48,rad=Math.min(w,h)*.36;
+ const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#10142b');bg.addColorStop(1,'#070a16');c.fillStyle=bg;c.fillRect(0,0,w,h);
+ for(let j=-4;j<=4;j++){c.beginPath();for(let i=-16;i<=16;i++){const x=cx+i*rad/8,y=cy+j*rad/8,dist=Math.hypot(x-cx,y-cy),dip=Math.max(0,1-dist/(rad*1.55))*Math.max(10,rad*.48);if(i===-16)c.moveTo(x,y+dip);else c.lineTo(x,y+dip);}c.strokeStyle=j===0?'rgba(143,128,240,.48)':'rgba(143,128,240,.22)';c.lineWidth=1;c.stroke();}
+ for(let i=-8;i<=8;i++){c.beginPath();for(let j=-12;j<=12;j++){const x=cx+i*rad/8,y=cy+j*rad/6,dist=Math.hypot(x-cx,y-cy),dip=Math.max(0,1-dist/(rad*1.55))*Math.max(10,rad*.48);if(j===-12)c.moveTo(x,y+dip);else c.lineTo(x,y+dip);}c.strokeStyle='rgba(78,224,200,.17)';c.lineWidth=1;c.stroke();}
+ sphere(c,cx,cy+rad*.18,rad*.19,'#ffe0a0','#b98b58','#392a25','#f2b441');
+ const a=expState.angle;const ox=cx+Math.cos(a)*rad*.68,oy=cy+Math.sin(a)*rad*.53;
+ if(expState.sheet){c.save();c.setLineDash([4,5]);c.strokeStyle='rgba(78,224,200,.55)';c.beginPath();c.ellipse(cx,cy,rad*.72,rad*.55,0,0,TAU);c.stroke();c.restore();sphere(c,ox,oy,Math.max(5,rad*.065),'#e3f5ff','#4ee0c8','#0b5553','#4ee0c8');}
+ c.fillStyle='rgba(163,172,198,.8)';c.font='10px '+MONO;c.textAlign='center';c.fillText('MODELO VISUAL · ANALOGÍA, NO A ESCALA',cx,h*.95);
+},dt=>{if(expState.sheet)expState.angle=(expState.angle+dt*.85)%TAU;});
+function startSheet(){expState.sheet=true;expState.angle=0;sheetLoop.on=true;$('#sheetGo').disabled=true;$('#sheetStop').disabled=false;Anim.pump();}
+function stopSheet(){expState.sheet=false;sheetLoop.on=false;$('#sheetGo').disabled=false;$('#sheetStop').disabled=true;sheetLoop.draw();Anim.pump();}
+$('#sheetGo').addEventListener('click',startSheet);$('#sheetStop').addEventListener('click',stopSheet);$('#sheetStop').disabled=true;
+
+/* vaso lleno, tarjeta sellada y presión atmosférica */
+const glassMotion={angle:0,target:0};
+const glassLoop=expCanvas('expGlass',(c,w,h)=>{
+ const cx=w*.5,cy=h*.49,gw=w*.34,gh=h*.58,half=gw/2,top=-gh/2,bottom=gh/2;
+ c.clearRect(0,0,w,h);
+ c.save();c.translate(cx,cy);c.rotate(glassMotion.angle);
+ const glassPath=()=>{c.beginPath();c.moveTo(-half,top);c.lineTo(-half,bottom-gh*.08);c.quadraticCurveTo(-half,bottom,0,bottom);c.quadraticCurveTo(half,bottom,half,bottom-gh*.08);c.lineTo(half,top);c.closePath();};
+ glassPath();c.save();c.clip();
+ const shade=c.createLinearGradient(-half,0,half,0);shade.addColorStop(0,'rgba(78,224,200,.13)');shade.addColorStop(.45,'rgba(78,224,200,.28)');shade.addColorStop(1,'rgba(78,224,200,.12)');c.fillStyle=shade;c.fillRect(-half,top,gw,gh);
+ const water=c.createLinearGradient(0,top,0,bottom);water.addColorStop(0,'rgba(125,241,224,.88)');water.addColorStop(1,'rgba(18,137,122,.94)');c.fillStyle=water;c.fillRect(-half+3,top+3,gw-6,gh-6);
+ c.restore();glassPath();c.strokeStyle='rgba(200,230,242,.96)';c.lineWidth=3;c.stroke();
+ c.strokeStyle='rgba(224,246,252,.95)';c.lineWidth=2;c.beginPath();c.ellipse(0,top,half,gh*.035,0,0,TAU);c.stroke();
+ // La tarjeta sigue cubriendo la boca durante el giro.
+ c.fillStyle='#f1eee4';c.strokeStyle='#ffd98a';c.lineWidth=2;c.beginPath();c.roundRect(-half*1.2,top-gh*.025,half*2.4,gh*.05,3);c.fill();c.stroke();
+ c.strokeStyle='rgba(154,128,78,.5)';c.lineWidth=1;c.beginPath();c.moveTo(-half*.85,top-gh*.004);c.lineTo(half*.85,top-gh*.004);c.stroke();
+ c.restore();
+ const inverted=glassMotion.angle>Math.PI*.5;
+ if(inverted){
+   c.strokeStyle='rgba(78,224,200,.78)';c.fillStyle='rgba(78,224,200,.9)';c.lineWidth=2.2;c.lineCap='round';
+   for(let i=-1;i<=1;i++){const x=cx+i*gw*.29,y0=cy+gh*.72,y1=cy+gh*.52;c.beginPath();c.moveTo(x,y0);c.lineTo(x,y1+8);c.stroke();c.beginPath();c.moveTo(x-5,y1+11);c.lineTo(x,y1+3);c.lineTo(x+5,y1+11);c.closePath();c.fill();}
+ }
+ c.fillStyle='rgba(241,238,228,.92)';c.font='600 11px '+MONO;c.textAlign='center';c.fillText(inverted?'INVERTIDO · TARJETA SELLADA':'VASO LLENO · TARJETA EN LA BOCA',cx,h*.94);
+},dt=>{
+ const delta=glassMotion.target-glassMotion.angle;
+ if(Math.abs(delta)<.012){glassMotion.angle=glassMotion.target;glassLoop.on=false;Anim.pump();}
+ else glassMotion.angle+=Math.sign(delta)*Math.min(Math.abs(delta),dt*1.7);
+});
+function setGlassTurn(turn){glassMotion.target=turn?Math.PI:0;glassLoop.on=Math.abs(glassMotion.target-glassMotion.angle)>.012;$('#glassFlip').setAttribute('aria-pressed',String(!!turn));$('#glassFlip').innerHTML='<svg class="ic"><use href="#i-reset"/></svg>'+(turn?'Regresar el vaso':'Voltear vaso');$('#glassCaption').textContent=turn?'La tarjeta sella la boca del vaso. La presión del aire exterior ayuda a sostener el agua mientras el vaso permanece invertido.':'Vaso lleno y tarjeta colocada en la boca. Pulsa «Voltear vaso» para observar el efecto.';glassLoop.draw();Anim.pump();}
+$('#glassFlip').addEventListener('click',()=>setGlassTurn(glassMotion.target<Math.PI/2));
+$('#glassReset').addEventListener('click',()=>setGlassTurn(false));
+glassLoop.draw();
+
+/* ═══════════════ INICIALIZACIÓN Y FONDO ═══════════════ */
+buildPlanets();buildPlanetTable();renderQuestion();
+$$('[data-count]').forEach(el=>countUp(el));
+function skyInit(){skyFit();skyPaint(performance.now());skyStart();}
+skyInit();window.addEventListener('resize',()=>{skyFit();skyPaint(performance.now());redrawAll();},{passive:true});
+window.addEventListener('scroll',()=>{scrollY=window.scrollY;},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(skyRaf)cancelAnimationFrame(skyRaf);skyRaf=0;}else skyStart();});
+selectTab('intro',{force:true,scroll:false});
+/* Evita que la analogía de la sábana se interprete como una reproducción literal de la relatividad. */
+})();
+</script>
+</body>
+</html>

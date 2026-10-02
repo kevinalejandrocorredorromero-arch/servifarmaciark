@@ -1,0 +1,89 @@
+<div class="modal fade" id="loginModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Iniciar Sesión</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="loginForm">
+          <div class="mb-3">
+            <label for="loginUser" class="form-label">Usuario o Email</label>
+            <input id="loginUser" class="form-control" placeholder="Ingresa tu usuario o email" required>
+          </div>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label">Contraseña</label>
+            <input id="loginPassword" class="form-control" type="password" placeholder="Ingresa tu contraseña" required>
+          </div>
+          <div id="loginError" class="alert alert-danger d-none"></div>
+          <button type="submit" class="btn btn-primary w-100">Iniciar Sesión</button>
+        </form>
+        <div id="firebaseLoginBlock" class="d-none">
+          <div class="text-center my-3">
+            <span class="text-muted small">o</span>
+          </div>
+          <button type="button" id="btnGoogle" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2 mb-2">
+            <i class="fa-brands fa-google"></i> Continuar con Google
+          </button>
+          <button type="button" id="btnGithub" class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2">
+            <i class="fa-brands fa-github"></i> Continuar con GitHub
+          </button>
+          <div id="firebaseError" class="alert alert-danger d-none mt-3 mb-0"></div>
+        </div>
+        <div class="text-center mt-3">
+          <small class="text-muted">¿No tienes cuenta? <a href="#" id="switchToRegister">Regístrate aquí</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="registerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Crear Cuenta</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="registerForm">
+          <div class="mb-3">
+            <label for="registerName" class="form-label">Nombre Completo</label>
+            <input id="registerName" class="form-control" placeholder="Ingresa tu nombre completo" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" title="Solo se permiten letras">
+            <small class="text-muted">Solo se permiten letras</small>
+          </div>
+          <div class="mb-3">
+            <label for="registerEmail" class="form-label">Email</label>
+            <input id="registerEmail" class="form-control" type="email" placeholder="Ingresa tu email" required>
+          </div>
+          <div class="mb-3">
+            <label for="registerUser" class="form-label">Usuario</label>
+            <input id="registerUser" class="form-control" placeholder="Elige un nombre de usuario" required>
+          </div>
+          <div class="mb-3">
+            <label for="registerPassword" class="form-label">Contraseña</label>
+            <input id="registerPassword" class="form-control" type="password" placeholder="Crea una contraseña" required>
+            <div class="password-rules mt-2">
+              <small class="text-muted d-block mb-1">La contraseña debe cumplir con:</small>
+              <div class="password-rule" id="rule-length"><i class="fa-solid fa-times text-danger me-1"></i><small>Mínimo 8 caracteres</small></div>
+              <div class="password-rule" id="rule-uppercase"><i class="fa-solid fa-times text-danger me-1"></i><small>Al menos una letra mayúscula</small></div>
+              <div class="password-rule" id="rule-lowercase"><i class="fa-solid fa-times text-danger me-1"></i><small>Al menos una letra minúscula</small></div>
+              <div class="password-rule" id="rule-number"><i class="fa-solid fa-times text-danger me-1"></i><small>Al menos un número</small></div>
+              <div class="password-rule" id="rule-special"><i class="fa-solid fa-times text-danger me-1"></i><small>Al menos un carácter especial (!@#$%^&*)</small></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="registerConfirmPassword" class="form-label">Confirmar Contraseña</label>
+            <input id="registerConfirmPassword" class="form-control" type="password" placeholder="Confirma tu contraseña" required>
+          </div>
+          <div id="registerError" class="alert alert-danger d-none"></div>
+          <div id="registerSuccess" class="alert alert-success d-none"></div>
+          <button type="submit" class="btn btn-primary w-100">Crear Cuenta</button>
+        </form>
+        <div class="text-center mt-3">
+          <small class="text-muted">¿Ya tienes cuenta? <a href="#" id="switchToLogin">Inicia sesión aquí</a></small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

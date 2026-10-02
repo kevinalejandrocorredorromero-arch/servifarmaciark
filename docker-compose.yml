@@ -1,0 +1,67 @@
+services:
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${MYSQL_DATABASE}
+      MARIADB_USER: ${MYSQL_USER}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    networks:
+      - servi_net
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      APP_ENV: production
+    volumes:
+      - ./config/config.php:/var/www/html/config/config.php:ro
+      - ./logs:/var/www/html/logs
+    networks:
+      - servi_net
+
+  cron:
+    image: curlimages/curl:8.10.1
+    restart: unless-stopped
+    depends_on:
+      - web
+    environment:
+      ALERT_URL: http://web/notificar_telegram.php
+      TZ: ${TZ:-America/Bogota}
+    volumes:
+      - ./docker/cron:/scripts:ro
+      - ./logs:/logs
+    entrypoint: ["/bin/sh", "/scripts/alertas.sh"]
+    networks:
+      - servi_net
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - servi_net
+
+networks:
+  servi_net:
+
+volumes:
+  mariadb_data:
+  caddy_data:
+  caddy_config:

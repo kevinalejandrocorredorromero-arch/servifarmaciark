@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+config/config.php
+logs/*.log
+automatizar_alertas_telegram.bat
+subir-cambios.bat
+0.mp3
+_backup_xampp_local

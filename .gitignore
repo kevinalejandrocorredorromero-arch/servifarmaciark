@@ -1,0 +1,25 @@
+# Credenciales locales: copia config/config.example.php a config/config.php y completa los valores
+config/config.php
+.env
+.env.*
+!.env.example
+
+# Respaldos locales
+_backup_xampp_local/
+*.bak
+
+# Logs generados en tiempo de ejecucion
+logs/*.log
+logs/firebase_certs.json
+
+# Sistema operativo y editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# Artefactos locales ajenos al sitio
+codex-skills-master/
+codex-skills-master.zip
+0.mp3

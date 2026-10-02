@@ -45,6 +45,12 @@ class UsuarioControlador extends Controlador {
         $this->success();
     }
 
+    public function obtenerTokenCsrf(): void {
+        // Permite al cliente renovar el token cuando la sesión del servidor
+        // se perdió (redeploy/reinicio del contenedor) sin recargar la página.
+        $this->success(['csrf_token' => Auth::tokenCsrf()]);
+    }
+
     private function obtenerIpCliente(): string {
         // No confiar en HTTP_X_FORWARDED_FOR salvo proxy de confianza configurado.
         return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';

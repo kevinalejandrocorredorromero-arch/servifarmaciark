@@ -57,6 +57,7 @@ $permisosAccion = [
     'resendVerification'     => 'publica',
     'logout'                 => 'publica',
     'sessionInfo'            => 'publica',
+    'csrfToken'              => 'publica',
     'getCart'                => 'publica',
     'obtenerCarrito'         => 'publica',
     'addToCart'              => 'publica',
@@ -177,6 +178,7 @@ $mapaControladores = [
     'me'                  => ['UsuarioControlador', 'obtenerPorId'],
     'logout'              => ['UsuarioControlador', 'cerrarSesion'],
     'sessionInfo'         => ['CarritoControlador', 'infoSesion'],
+    'csrfToken'           => ['UsuarioControlador', 'obtenerTokenCsrf'],
 ];
 
 // --- Autorización ---

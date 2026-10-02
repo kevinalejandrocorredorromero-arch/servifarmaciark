@@ -11,7 +11,7 @@ class APIClient {
   /**
    * Realiza una solicitud GET o POST al API
    */
-  async request(action, method = 'GET', data = null) {
+  async request(action, method = 'GET', data = null, _reintentoCsrf = false) {
     try {
       let url = `${this.baseURL}?action=${action}`
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || ''
@@ -43,6 +43,12 @@ class APIClient {
           const body = await response.json()
           msg = body.error || body.message || msg
         } catch (_) { /* ignorar si no es JSON */ }
+        // Si el servidor reinició (deploy/sleep de Render) la sesión se perdió y
+        // el token de la página queda obsoleto: se renueva y se reintenta una vez.
+        if (response.status === 403 && /csrf/i.test(msg) && method === 'POST' && !_reintentoCsrf) {
+          const renovado = await this.renovarTokenCsrf()
+          if (renovado) return this.request(action, method, data, true)
+        }
         const err = new Error(msg)
         err.status = response.status
         throw err
@@ -62,6 +68,33 @@ class APIClient {
     } catch (error) {
       console.error(`Error en API call (${action}):`, error)
       throw error
+    }
+  }
+
+  /**
+   * Pide al servidor un token CSRF fresco (vinculado a la sesión vigente) y
+   * actualiza el meta del documento. Devuelve true si se pudo renovar.
+   */
+  async renovarTokenCsrf() {
+    try {
+      const res = await fetch(`${this.baseURL}?action=csrfToken`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+      })
+      if (!res.ok) return false
+      const data = await res.json()
+      if (!data || !data.success || !data.csrf_token) return false
+      let meta = document.querySelector('meta[name="csrf-token"]')
+      if (!meta) {
+        meta = document.createElement('meta')
+        meta.setAttribute('name', 'csrf-token')
+        document.head.appendChild(meta)
+      }
+      meta.setAttribute('content', data.csrf_token)
+      return true
+    } catch (_) {
+      return false
     }
   }
 

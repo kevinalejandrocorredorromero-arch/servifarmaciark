@@ -1142,6 +1142,71 @@ async function appInit() {
     })
   }
 
+  let reenvioEmailPendiente = ''
+  let reenvioCooldown = null
+
+  function ocultarPanelReenvio() {
+    document.getElementById('registerResend')?.classList.add('d-none')
+    if (reenvioCooldown) {
+      clearInterval(reenvioCooldown)
+      reenvioCooldown = null
+    }
+  }
+
+  function iniciarCooldownReenvio(segundos) {
+    const btn = document.getElementById('btnReenviarCorreo')
+    if (!btn) return
+    btn.disabled = true
+    let restante = segundos
+    btn.textContent = `Reenviar correo (${restante}s)`
+    if (reenvioCooldown) clearInterval(reenvioCooldown)
+    reenvioCooldown = setInterval(() => {
+      restante--
+      if (restante <= 0) {
+        clearInterval(reenvioCooldown)
+        reenvioCooldown = null
+        btn.disabled = false
+        btn.textContent = 'Reenviar correo'
+      } else {
+        btn.textContent = `Reenviar correo (${restante}s)`
+      }
+    }, 1000)
+  }
+
+  function mostrarPanelReenvio(email) {
+    reenvioEmailPendiente = email
+    const emailEl = document.getElementById('registerResendEmail')
+    const msgEl = document.getElementById('registerResendMsg')
+    if (emailEl) emailEl.textContent = email
+    if (msgEl) {
+      msgEl.textContent = ''
+      msgEl.classList.add('d-none')
+      msgEl.classList.remove('text-danger')
+    }
+    document.getElementById('registerResend')?.classList.remove('d-none')
+    iniciarCooldownReenvio(60)
+  }
+
+  async function handleReenviarCorreo() {
+    const btn = document.getElementById('btnReenviarCorreo')
+    const msgEl = document.getElementById('registerResendMsg')
+    if (!btn || !msgEl || !reenvioEmailPendiente) return
+    btn.disabled = true
+    msgEl.classList.remove('d-none', 'text-danger')
+    msgEl.textContent = 'Enviando...'
+    try {
+      const res = await apiClient.resendVerification(reenvioEmailPendiente)
+      if (!res || !res.success) throw new Error(res?.error || 'No se pudo reenviar el correo')
+      msgEl.textContent = 'Correo reenviado. Revisa tu bandeja de entrada y la carpeta de spam.'
+      iniciarCooldownReenvio(60)
+    } catch (err) {
+      console.error('Error reenviando verificación:', err)
+      msgEl.classList.add('text-danger')
+      msgEl.textContent = err.message || 'No se pudo reenviar el correo. Intenta de nuevo.'
+      btn.disabled = false
+    }
+  }
+
   async function handleRegister(event) {
     event.preventDefault()
     if (!registerForm) return
@@ -1155,6 +1220,7 @@ async function appInit() {
     if (!errorEl || !successEl) return
     errorEl.classList.add('d-none')
     successEl.classList.add('d-none')
+    ocultarPanelReenvio()
     if (!name || !email || !username || !password || !confirmPassword) {
       errorEl.textContent = 'Todos los campos son obligatorios'
       errorEl.classList.remove('d-none')
@@ -1174,24 +1240,21 @@ async function appInit() {
     try {
       const response = await apiClient.registerUser({ name, email, username, password })
       if (response.success) {
-        if (response.verificacion_enviada) {
-          successEl.textContent = 'Te enviamos un correo de verificación. Revisa tu bandeja (o spam) y haz clic en el enlace antes de iniciar sesión.'
-        } else {
-          successEl.textContent = 'Cuenta creada correctamente. Inicia sesión ahora.'
-        }
-        successEl.classList.remove('d-none')
         registerForm.reset()
-        setTimeout(() => {
-          const modal = bootstrap.Modal.getInstance(registerModal)
-          modal?.hide()
-          // Con verificación pendiente no saltamos al login: el usuario primero
-          // debe confirmar el correo en su bandeja.
-          if (!response.verificacion_enviada && loginModal) {
-            let logModal = bootstrap.Modal.getInstance(loginModal)
-            if (!logModal) logModal = new bootstrap.Modal(loginModal)
-            logModal.show()
-          }
-        }, 1500)
+        // El modal permanece abierto en ambos casos: el usuario debe ver la
+        // notificación y tener a mano la opción de reenvío.
+        if (response.verificacion_enviada) {
+          successEl.textContent = '¡Cuenta creada con éxito!'
+          successEl.classList.remove('d-none')
+          mostrarPanelReenvio(email)
+        } else {
+          // La cuenta se creó pero el correo no pudo enviarse (fallo temporal
+          // del proveedor): sin reenvío el usuario quedaría bloqueado, porque
+          // el login exige correo verificado.
+          successEl.textContent = 'Cuenta creada, pero no pudimos enviarte el correo de verificación en este momento.'
+          successEl.classList.remove('d-none')
+          mostrarPanelReenvio(email)
+        }
       } else {
         errorEl.textContent = response.error || 'Error al crear la cuenta'
         errorEl.classList.remove('d-none')
@@ -2666,6 +2729,8 @@ async function appInit() {
     if (window.rkFirebase) inicializarFirebaseUI()
     else document.addEventListener('rk-firebase-ready', inicializarFirebaseUI)
     registerForm?.addEventListener('submit', handleRegister)
+    document.getElementById('btnReenviarCorreo')?.addEventListener('click', handleReenviarCorreo)
+    registerModal?.addEventListener('hidden.bs.modal', ocultarPanelReenvio)
     document.getElementById('editProfileForm')?.addEventListener('submit', handleEditProfileSubmit)
     document.getElementById('refreshMyOrdersBtn')?.addEventListener('click', loadMyOrders)
     closeCategoryBtn?.addEventListener('click', () => {

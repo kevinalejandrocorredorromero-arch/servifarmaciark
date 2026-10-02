@@ -78,6 +78,11 @@
           </div>
           <div id="registerError" class="alert alert-danger d-none"></div>
           <div id="registerSuccess" class="alert alert-success d-none"></div>
+          <div id="registerResend" class="alert alert-warning d-none">
+            <p class="mb-2"><i class="fa-solid fa-envelope-circle-check me-2"></i>Te enviamos un correo de verificación a <strong id="registerResendEmail"></strong>. Revisa tu bandeja de entrada y la carpeta de spam.</p>
+            <p class="mb-0 small">¿No te llegó el correo? <button type="button" id="btnReenviarCorreo" class="btn btn-sm btn-outline-primary">Reenviar correo</button></p>
+            <div id="registerResendMsg" class="small mt-2 d-none"></div>
+          </div>
           <button type="submit" class="btn btn-primary w-100">Crear Cuenta</button>
         </form>
         <div class="text-center mt-3">

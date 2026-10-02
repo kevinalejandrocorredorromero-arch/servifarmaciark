@@ -26,3 +26,6 @@ codex-skills-master.zip
 
 # Volcado obsoleto: no coincide con el esquema real (usar mysqldump de la BD local)
 /database.sql
+
+# Volcados de BD generados: nunca al repo (pueden contener datos de usuarios)
+/database/*.sql

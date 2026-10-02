@@ -7,11 +7,35 @@ class ChatController extends Controlador {
 
     public function send(): void {
         $input = $this->getInput();
-        $userMessage = trim($input['message'] ?? '');
+        $userMessage = trim((string) ($input['message'] ?? ''));
         $conversationHistory = $input['history'] ?? [];
 
-        if (empty($userMessage)) {
-            $this->error('Mensaje requerido');
+        if ($userMessage === '' || mb_strlen($userMessage, 'UTF-8') > 1000) {
+            $this->error('Mensaje requerido o demasiado largo');
+            return;
+        }
+        if (!is_array($conversationHistory) || count($conversationHistory) > 20) {
+            $this->error('Historial inválido o demasiado largo');
+            return;
+        }
+        foreach ($conversationHistory as $msg) {
+            if (!is_array($msg) || !isset($msg['content']) || mb_strlen((string) $msg['content'], 'UTF-8') > 2000) {
+                $this->error('Historial inválido');
+                return;
+            }
+        }
+
+        $rateKey = 'chat_' . sha1((string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0') . '|' . session_id());
+        $rateFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $rateKey . '.json';
+        $rate = is_file($rateFile) ? json_decode((string) @file_get_contents($rateFile), true) : null;
+        $now = time();
+        if (!is_array($rate) || ($now - (int) ($rate['inicio'] ?? 0)) >= 60) {
+            $rate = ['inicio' => $now, 'cantidad' => 0];
+        }
+        $rate['cantidad']++;
+        @file_put_contents($rateFile, json_encode($rate), LOCK_EX);
+        if ($rate['cantidad'] > 20) {
+            $this->error('Demasiadas solicitudes. Intenta nuevamente en un minuto.', 429);
             return;
         }
 
@@ -56,7 +80,9 @@ class ChatController extends Controlador {
                 'Authorization: Bearer ' . $apiKey,
             ],
             CURLOPT_TIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_CONNECTTIMEOUT => 8,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
         ]);
 
         $response = curl_exec($ch);
@@ -65,14 +91,14 @@ class ChatController extends Controlador {
         curl_close($ch);
 
         if ($curlError) {
-            $this->error('Error de conexión con el servicio de IA: ' . $curlError, 502);
+            error_log('[chat] Error cURL del proveedor: ' . $curlError);
+            $this->error('No se pudo conectar con el asistente.', 502);
             return;
         }
 
         if ($httpCode !== 200) {
-            $errorData = json_decode($response, true);
-            $errorMsg = $errorData['error']['message'] ?? 'Error desconocido';
-            $this->error('Error del servicio de IA: ' . $errorMsg, 502);
+            error_log('[chat] Proveedor respondió HTTP ' . $httpCode);
+            $this->error('El asistente no está disponible temporalmente.', 502);
             return;
         }
 

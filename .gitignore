@@ -23,3 +23,6 @@ desktop.ini
 codex-skills-master/
 codex-skills-master.zip
 0.mp3
+
+# Volcado obsoleto: no coincide con el esquema real (usar mysqldump de la BD local)
+/database.sql

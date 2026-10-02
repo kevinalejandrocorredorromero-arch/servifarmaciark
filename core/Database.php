@@ -8,16 +8,18 @@ class Database {
         $config = require __DIR__ . '/../config/config.php';
         $db = $config['db'];
 
+        mysqli_report(MYSQLI_REPORT_OFF);
         $this->conexion = mysqli_connect($db['host'], $db['user'], $db['pass'], $db['name']);
         if (!$this->conexion) {
-            die("Conexión fallida: " . mysqli_connect_error());
+            error_log('[Database] Conexión MySQL fallida: ' . mysqli_connect_errno());
+            throw new RuntimeException('No se pudo conectar a la base de datos.');
         }
-        mysqli_set_charset($this->conexion, $db['charset']);
-
-        mysqli_query($this->conexion, "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'customer'");
-        mysqli_query($this->conexion, "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS vendedor_id INT NULL");
-        mysqli_query($this->conexion, "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS usuario_id INT NULL");
-        mysqli_query($this->conexion, "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS estado VARCHAR(30) NOT NULL DEFAULT 'pendiente'");
+        if (!mysqli_set_charset($this->conexion, $db['charset'])) {
+            error_log('[Database] No se pudo establecer charset MySQL: ' . mysqli_error($this->conexion));
+            throw new RuntimeException('No se pudo preparar la conexión a la base de datos.');
+        }
+        // Los cambios de esquema se ejecutan manualmente mediante migrations/*.sql;
+        // no se modifica la estructura en cada request de la aplicación.
     }
 
     public static function getInstance(): self {

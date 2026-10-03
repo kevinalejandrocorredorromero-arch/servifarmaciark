@@ -31,6 +31,7 @@ return [
     'telegram' => [
         'bot_token' => 'COLOCA_AQUI_TU_TELEGRAM_BOT_TOKEN',
         'chat_id'   => 'COLOCA_AQUI_TU_TELEGRAM_CHAT_ID',
+        'group_chat_id' => 'COLOCA_AQUI_EL_ID_DEL_GRUPO_DE_PEDIDOS (opcional)',
         'umbral_bajo_stock' => 10,
     ],
 ];

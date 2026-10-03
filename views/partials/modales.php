@@ -1,3 +1,16 @@
+<div class="offcanvas offcanvas-end rk-cart-drawer" tabindex="-1" id="cartDrawer" aria-labelledby="cartDrawerLabel">
+  <div class="offcanvas-header border-bottom">
+    <div><span class="section-eyebrow">Tu selección</span><h2 class="offcanvas-title h4 mb-0" id="cartDrawerLabel"><i class="fa-solid fa-cart-shopping me-2 text-primary"></i>Tu carrito <span id="cartDrawerCount" class="badge bg-primary rounded-pill">0</span></h2></div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar carrito"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column">
+    <div class="rk-shipping-progress mb-3" aria-live="polite"><div class="d-flex justify-content-between small mb-1"><span id="shippingMessage">Agrega productos para calcular el envío</span><strong id="shippingProgressValue">$0</strong></div><div class="progress" role="progressbar" aria-label="Progreso para envío gratis" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="shippingProgressBar" class="progress-bar"></div></div></div>
+    <div id="cartDrawerEmpty" class="text-center py-5 rk-empty-state"><i class="fa-solid fa-basket-shopping fa-3x mb-3"></i><p class="mb-1">Tu carrito está vacío</p><small>Agrega productos para verlos aquí.</small></div>
+    <div id="cartDrawerItems" class="cart-items-list flex-grow-1"></div>
+    <div class="rk-cart-summary border-top pt-3 mt-3"><div class="d-flex justify-content-between align-items-center"><span>Subtotal</span><strong id="cartDrawerTotal" class="fs-4 text-primary">$0</strong></div><button type="button" class="btn btn-primary w-100 mt-3" id="proceedToCheckoutDrawer"><i class="fa-solid fa-arrow-right me-2"></i>Proceder al pago</button></div>
+  </div>
+</div>
+
 <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl modal-cart">
     <div class="modal-content cart-modal-content">

@@ -178,7 +178,7 @@ class ChatController extends Controlador {
         $prompt .= "- Dirección: Cra. 67 # 61- 24, Bogotá, Colombia\n";
         $prompt .= "- Teléfono: 3115631854\n";
         $prompt .= "- Correo: info@servifarmaciark.com\n";
-        $prompt .= "- Horario: Lunes a Sábado, 8:00 AM - 8:00 PM\n";
+        $prompt .= "- Horario: Lunes a Domingo, 8:00 AM - 8:00 PM\n";
         $prompt .= "- Misión: Brindar servicios farmacéuticos de calidad, garantizando el acceso a medicamentos seguros y efectivos, con un servicio personalizado que contribuya al bienestar y la salud de nuestra comunidad.\n";
         $prompt .= "- Visión: Ser la farmacia líder en la región, reconocida por nuestra excelencia en el servicio, innovación tecnológica y compromiso con la salud integral de nuestros clientes.\n";
         $prompt .= "- Términos y Condiciones: Al usar nuestro sitio web y servicios, aceptas nuestros términos. Todos los productos están sujetos a disponibilidad de stock. Los precios pueden variar sin previo aviso. No nos hacemos responsables por el uso indebido de los medicamentos. Para devoluciones, el producto debe estar sellado y dentro de los 30 días posteriores a la compra.\n";

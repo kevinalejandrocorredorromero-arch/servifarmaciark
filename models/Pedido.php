@@ -47,7 +47,7 @@ class PedidoModelo {
         return $row ? $this->mapearFila($row) : null;
     }
 
-    public function crear(array $data): ?string {
+    public function crear(array $data, ?array &$resumen = null): ?string {
         $items = $data['items'] ?? [];
         $metodoPago = $this->db->escape($data['paymentMethod'] ?? $data['metodo_pago'] ?? 'cash');
         $infoEntrega = $data['deliveryInfo'] ?? $data['info_entrega'] ?? [];
@@ -68,6 +68,8 @@ class PedidoModelo {
         }
         $pedidoId = $this->db->insertId();
         $totalCalculado = 0.0;
+        $itemsNotificacion = [];
+        $transicionesStock = [];
 
         foreach ($items as $item) {
             $productoId = (int) ($item['id'] ?? $item['product_id'] ?? 0);
@@ -79,7 +81,7 @@ class PedidoModelo {
             }
 
             // El bloqueo ocurre dentro de la transacción, antes de calcular y descontar stock.
-            $resProd = $this->db->query("SELECT id, nombre, categoria, precio, precio_caja, precio_unidad,
+            $resProd = $this->db->query("SELECT id, nombre, categoria, precio, precio_anterior, descuento_porcentaje, precio_caja, precio_unidad,
                     es_fraccionable, unidades_por_caja, stock_total_unidades, stock
                     FROM productos WHERE id = {$productoId} FOR UPDATE");
             if (!$resProd || !($rowProd = mysqli_fetch_assoc($resProd))) {
@@ -93,12 +95,14 @@ class PedidoModelo {
                 $this->db->rollback();
                 return null;
             }
-            $precio = (float) $rowProd['precio'];
+            $descuento = max(0, min(100, (float) ($rowProd['descuento_porcentaje'] ?? 0)));
+            $precioBase = (float) $rowProd['precio'];
             if ($tipoVenta === 'caja' && $rowProd['precio_caja'] !== null) {
-                $precio = (float) $rowProd['precio_caja'];
+                $precioBase = (float) $rowProd['precio_caja'];
             } elseif ($tipoVenta === 'unidad' && $rowProd['precio_unidad'] !== null) {
-                $precio = (float) $rowProd['precio_unidad'];
+                $precioBase = (float) $rowProd['precio_unidad'];
             }
+            $precio = round($precioBase * (1 - $descuento / 100), 2);
             $unidadesADescontar = ($tipoVenta === 'caja') ? $cantidad * $unidadesPorCaja : $cantidad;
             $stockTotalActual = (int) $rowProd['stock_total_unidades'];
             $stockActual = (int) $rowProd['stock'];
@@ -112,6 +116,11 @@ class PedidoModelo {
             $categoria = $this->db->escape((string) $rowProd['categoria']);
             $lineaTotal = $precio * $cantidad;
             $totalCalculado += $lineaTotal;
+            $itemsNotificacion[] = [
+                'nombre' => (string) $rowProd['nombre'],
+                'cantidad' => $cantidad,
+                'total' => round($lineaTotal, 2),
+            ];
             $sqlItem = "INSERT INTO detalles_pedido (pedido_id, producto_id, nombre, categoria, precio, cantidad, total, tipo_venta, unidades_descontadas)
                         VALUES ({$pedidoId}, {$productoId}, '{$nombre}', '{$categoria}', {$precio}, {$cantidad}, {$lineaTotal}, '{$tipoVenta}', {$unidadesADescontar})";
             if (!$this->db->query($sqlItem)) {
@@ -123,6 +132,11 @@ class PedidoModelo {
             $nuevoStock = ($esFraccionable && $unidadesPorCaja > 0)
                 ? intdiv($nuevoStockTotal, $unidadesPorCaja)
                 : $stockActual - $cantidad;
+            $transicionesStock[] = [
+                'id' => $productoId,
+                'stock_antes' => $stockTotalActual,
+                'stock_despues' => $nuevoStockTotal,
+            ];
             if (!$this->db->query("UPDATE productos SET stock_total_unidades = {$nuevoStockTotal}, stock = {$nuevoStock} WHERE id = {$productoId}")) {
                 $this->db->rollback();
                 return null;
@@ -144,6 +158,7 @@ class PedidoModelo {
             $this->db->rollback();
             return null;
         }
+        $resumen = ['total' => round($totalCalculado, 2), 'items' => $itemsNotificacion, 'stock_transiciones' => $transicionesStock];
         return $numeroPedido;
     }
 

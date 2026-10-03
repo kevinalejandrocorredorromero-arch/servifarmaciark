@@ -40,13 +40,13 @@ $firebasePublico = json_encode([
 
   <?php require __DIR__ . '/partials/beneficios.php'; ?>
 
+  <?php require __DIR__ . '/partials/hero.php'; ?>
+
   <?php require __DIR__ . '/partials/categorias.php'; ?>
 
   <?php require __DIR__ . '/partials/productos.php'; ?>
 
   <?php require __DIR__ . '/partials/marcas.php'; ?>
-
-  </div>
 
   <?php require __DIR__ . '/partials/detalle-producto.php'; ?>
 

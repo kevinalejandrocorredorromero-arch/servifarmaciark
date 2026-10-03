@@ -28,6 +28,11 @@ require_once __DIR__ . '/controllers/PedidoControlador.php';
 require_once __DIR__ . '/controllers/CarritoControlador.php';
 require_once __DIR__ . '/controllers/PagoConfiguracionControlador.php';
 
+// Una vez al día, al usar la app, se envía sola la alerta de inventario
+// (stock bajo y por vencer) por Telegram. No bloquea: si ya corrió hoy, sale.
+require_once __DIR__ . '/notificar_telegram_helper.php';
+ejecutarAlertasInventarioDiarias();
+
 // Sesión PHP real: la identidad sale de $_SESSION, nunca del cliente.
 Auth::iniciarSesion();
 

@@ -33,6 +33,7 @@ return [
     'telegram' => [
         'bot_token' => 'CHANGE_ME',
         'chat_id' => 'CHANGE_ME',
+        'group_chat_id' => 'CHANGE_ME',
         'umbral_bajo_stock' => 10,
     ],
     'brevo' => [

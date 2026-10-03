@@ -100,8 +100,13 @@
                             </div>
                             <div class="mb-3">
                               <label class="form-label">Precio</label>
-                              <input type="number" class="form-control" id="productPrice" step="0.01" required>
+                              <input type="number" class="form-control" id="productPrice" step="0.01" min="0" required>
                             </div>
+                            <div class="row g-2 mb-3">
+                              <div class="col-md-6"><label class="form-label" for="productOriginalPrice">Precio anterior</label><input type="number" class="form-control" id="productOriginalPrice" min="0" step="0.01" placeholder="Opcional"></div>
+                              <div class="col-md-6"><label class="form-label" for="productDiscount">Descuento (%)</label><input type="number" class="form-control" id="productDiscount" min="0" max="100" step="0.01" value="0"><small class="text-muted">Usa 0 para quitarlo.</small></div>
+                            </div>
+                            <div id="productDiscountPreview" class="alert alert-info py-2 d-none" role="status"></div>
                             <div class="mb-3">
                               <label class="form-label">Stock Disponible</label>
                               <input type="number" class="form-control" id="productStock" required>

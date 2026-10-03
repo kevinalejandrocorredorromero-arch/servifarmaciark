@@ -1,0 +1,197 @@
+id	nombre	categoria	COALESCE(imagen,'')
+1	esparadrapo	medicamentos	https://copservir.vtexassets.com/arquivos/ids/1916503/ESPARADRAPO-LEUKOPLAST-TELA_F.png?v=639130519937230000
+2	Vitamina C 1000mg	medicamentos	https://images.unsplash.com/photo-1550572017-edd951aa8ca0?w=300&h=200&fit=crop
+3	Analg‚sico Ibuprofeno	medicamentos	https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=200&fit=crop
+4	Jarabe Tos Infantil	medicamentos	https://www.farmaciagamo.com/media/magefan_blog/2023/jarabe-tos-natuyral-ninos-tussiplan-kids.png
+5	Protector Solar SPF50	dermocosmetica	https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=300&h=200&fit=crop
+6	Crema Hidratante 200ml	dermocosmetica	https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=300&h=200&fit=crop
+7	Vitamina C 1000mg	medicamentos	https://images.unsplash.com/photo-1550572017-edd951aa8ca0?w=300&h=200&fit=crop
+8	Analg‚sico Ibuprofeno	medicamentos	https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=300&h=200&fit=crop
+9	Jarabe Tos Infantil	medicamentos	https://images.unsplash.com/photo-1580910051074-1a2b1f7b0f3f?w=300&h=200&fit=crop
+10	Protector Solar SPF50	dermocosmetica	https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=300&h=200&fit=crop
+11	Crema Hidratante 200ml	dermocosmetica	https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=300&h=200&fit=crop
+12	agua 250mL	higiene	https://via.placeholder.com/300x200/ffffff/ffffff?text=
+13	vendas	higiene	https://sl.bing.net/fNziDzCf1b2
+14	dolex gripa	medicamentos	https://product-images.farmatodo.com/OYFs9uAPacUxrZs2a-8RhpOwUCHVU_x_8KJFcFge-wmF5u1UQYR8YhyMQNMCIALJ-480o8UMsJ9hNoPwDJCw-DuvZ7JMEtMcUPUvOcCCiCGrIYc=s360
+16	advil	general	https://copservir.vtexassets.com/arquivos/ids/1891984/ADVIL-MAX-400-MG_F.png?v=639110914847770000
+17	miel africana	nutricion	https://solofruver.com/wp-content/uploads/2026/01/miel-botella.jpg
+19	Paracetamol 500mg	medicamentos	
+20	Ibuprofeno 400mg	medicamentos	
+21	Aspirina 100mg	medicamentos	
+22	Amoxicilina 500mg	medicamentos	
+23	Cefalexina 500mg	medicamentos	
+24	Dipirona 500mg	medicamentos	
+25	Omeprazol 20mg	medicamentos	
+26	Metformina 850mg	medicamentos	
+27	Atorvastatina 10mg	medicamentos	
+28	Losart n 50mg	medicamentos	
+29	Loratadina 10mg	medicamentos	
+30	Cetirizina 10mg	medicamentos	
+31	Fexofenadina 180mg	medicamentos	
+32	Diclofenaco Gel 1%	medicamentos	
+33	Voltaren Pomada	medicamentos	
+34	Protector Solar SPF 50+	dermocosmetica	
+35	Bloqueador Solar Infantil	dermocosmetica	
+36	Crema Hidratante Facial	dermocosmetica	
+37	Crema de Noche Anti-Edad	dermocosmetica	
+38	Limpiador Facial Espuma	dermocosmetica	
+39	T¢nico Facial	dermocosmetica	
+40	Serum Vitamina C	dermocosmetica	
+41	Mascarilla Facial Arcilla	dermocosmetica	
+42	Crema para Ojeras	dermocosmetica	
+43	Exfoliante Facial Suave	dermocosmetica	
+44	Pa¤ales Talla RN	bebes	
+45	Pa¤ales Talla P	bebes	
+46	Pa¤ales Talla M	bebes	
+47	Pa¤ales Talla G	bebes	
+48	Toallitas H£medas para Beb‚	bebes	
+49	Crema Pa¤al Anti-Dermatitis	bebes	
+50	Leche de F¢rmula Etapa 1	bebes	
+51	Leche de F¢rmula Etapa 2	bebes	
+52	Champ£ para Beb‚	bebes	
+53	Jab¢n L¡quido para Beb‚	bebes	
+54	Champ£ Anti-Caspa	higiene	
+55	Acondicionador Hidratante	higiene	
+56	Gel de Ba¤o Neutro	higiene	
+57	Desodorante Spray 48h	higiene	
+58	Desodorante Roll-on	higiene	
+59	Pasta Dental Menta	higiene	
+60	Pasta Dental Sensibilidad	higiene	
+61	Enjuague Bucal Antis‚ptico	higiene	
+62	Papel Higi‚nico x4	higiene	
+63	Pa¤uelos Descartables	higiene	
+64	Base de Maquillaje L¡quida	cosmeticos	
+65	Corrector Facial	cosmeticos	
+66	Polvo Compacto	cosmeticos	
+67	Rubor en Polvo	cosmeticos	
+68	Sombra de Ojos Paleta	cosmeticos	
+69	Delineador L¡quido Negro	cosmeticos	
+70	Mascara de Pesta¤as Volumen	cosmeticos	
+71	Labial Mate	cosmeticos	
+72	Labial Brillo	cosmeticos	
+73	L piz de Labios	cosmeticos	
+74	Vitamina C 1000mg	nutricion	
+75	Vitamina D3 1000UI	nutricion	
+76	Vitamina B Complex	nutricion	
+77	Calcio + Magnesio	nutricion	
+78	Omega 3 1000mg	nutricion	
+79	Biotina 10000mcg	nutricion	
+80	Hierro + µcido F¢lico	nutricion	
+81	Col geno Hidrolizado	nutricion	
+82	Probi¢ticos	nutricion	
+83	Suplemento Multivitam¡nico	nutricion	
+84	Term¢metro Digital	equipos	
+85	Tensi¢metro Digital Autom tico	equipos	
+86	Ox¡metro de Pulso	equipos	
+87	Gluc¢metro Digital	equipos	
+88	Tiras Reactivas Gluc¢metro	equipos	
+89	Inhalador de Vapor	equipos	
+90	Humidificador de Aire	equipos	
+91	Masajeador Cervical	equipos	
+92	Bolsa de Agua Caliente	equipos	
+93	Botiqu¡n de Primeros Auxilios	equipos	
+94	Crema Anti-Acn‚ 5%	dermatologicos	
+95	Limpiador Anti-Acn‚	dermatologicos	
+96	Serum Anti-Acn‚	dermatologicos	
+97	Crema Psoriasis	dermatologicos	
+98	Loci¢n Dermatitis At¢pica	dermatologicos	
+99	Antif£ngico T¢pico	dermatologicos	
+100	Crema para Eczema	dermatologicos	
+101	Loci¢n Contra Caspa Severa	dermatologicos	
+102	Cicatrizante de Heridas	dermatologicos	
+103	Tratamiento Celulitis T¢pico	dermatologicos	
+104	Pack Protecci¢n Solar Verano	ofertas	
+105	Pack Cuidado Capilar Completo	ofertas	
+106	Kit Higiene Dental	ofertas	
+107	Pack Belleza Facial B sico	ofertas	
+108	Kit Primeros Auxilios Viajero	ofertas	
+109	Paracetamol 500mg	medicamentos	
+110	Ibuprofeno 400mg	medicamentos	
+111	Aspirina 100mg	medicamentos	
+112	Amoxicilina 500mg	medicamentos	
+113	Cefalexina 500mg	medicamentos	
+114	Dipirona 500mg	medicamentos	
+115	Omeprazol 20mg	medicamentos	
+116	Metformina 850mg	medicamentos	
+117	Atorvastatina 10mg	medicamentos	
+118	Losart n 50mg	medicamentos	
+119	Loratadina 10mg	medicamentos	
+120	Cetirizina 10mg	medicamentos	
+121	Fexofenadina 180mg	medicamentos	
+122	Diclofenaco Gel 1%	medicamentos	
+123	Voltaren Pomada	medicamentos	
+124	Protector Solar SPF 50+	dermocosmetica	
+125	Bloqueador Solar Infantil	dermocosmetica	
+126	Crema Hidratante Facial	dermocosmetica	
+127	Crema de Noche Anti-Edad	dermocosmetica	
+128	Limpiador Facial Espuma	dermocosmetica	
+129	T¢nico Facial	dermocosmetica	
+130	Serum Vitamina C	dermocosmetica	
+131	Mascarilla Facial Arcilla	dermocosmetica	
+132	Crema para Ojeras	dermocosmetica	
+133	Exfoliante Facial Suave	dermocosmetica	
+134	Pa¤ales Talla RN	bebes	
+135	Pa¤ales Talla P	bebes	
+136	Pa¤ales Talla M	bebes	
+137	Pa¤ales Talla G	bebes	
+138	Toallitas H£medas para Beb‚	bebes	
+139	Crema Pa¤al Anti-Dermatitis	bebes	
+140	Leche de F¢rmula Etapa 1	bebes	
+141	Leche de F¢rmula Etapa 2	bebes	
+142	Champ£ para Beb‚	bebes	
+143	Jab¢n L¡quido para Beb‚	bebes	
+144	Champ£ Anti-Caspa	higiene	
+145	Acondicionador Hidratante	higiene	
+146	Gel de Ba¤o Neutro	higiene	
+147	Desodorante Spray 48h	higiene	
+148	Desodorante Roll-on	higiene	
+149	Pasta Dental Menta	higiene	
+150	Pasta Dental Sensibilidad	higiene	
+151	Enjuague Bucal Antis‚ptico	higiene	
+152	Papel Higi‚nico x4	higiene	
+153	Pa¤uelos Descartables	higiene	
+154	Base de Maquillaje L¡quida	cosmeticos	
+155	Corrector Facial	cosmeticos	
+156	Polvo Compacto	cosmeticos	
+157	Rubor en Polvo	cosmeticos	
+158	Sombra de Ojos Paleta	cosmeticos	
+159	Delineador L¡quido Negro	cosmeticos	
+160	Mascara de Pesta¤as Volumen	cosmeticos	
+161	Labial Mate	cosmeticos	
+162	Labial Brillo	cosmeticos	
+163	L piz de Labios	cosmeticos	
+164	Vitamina C 1000mg	nutricion	
+165	Vitamina D3 1000UI	nutricion	
+166	Vitamina B Complex	nutricion	
+167	Calcio + Magnesio	nutricion	
+168	Omega 3 1000mg	nutricion	
+169	Biotina 10000mcg	nutricion	
+170	Hierro + µcido F¢lico	nutricion	
+171	Col geno Hidrolizado	nutricion	
+172	Probi¢ticos	nutricion	
+173	Suplemento Multivitam¡nico	nutricion	
+174	Term¢metro Digital	equipos	
+175	Tensi¢metro Digital Autom tico	equipos	
+176	Ox¡metro de Pulso	equipos	
+177	Gluc¢metro Digital	equipos	
+178	Tiras Reactivas Gluc¢metro	equipos	
+179	Inhalador de Vapor	equipos	
+180	Humidificador de Aire	equipos	
+181	Masajeador Cervical	equipos	
+182	Bolsa de Agua Caliente	equipos	
+183	Botiqu¡n de Primeros Auxilios	equipos	
+184	Crema Anti-Acn‚ 5%	dermatologicos	
+185	Limpiador Anti-Acn‚	dermatologicos	
+186	Serum Anti-Acn‚	dermatologicos	
+187	Crema Psoriasis	dermatologicos	
+188	Loci¢n Dermatitis At¢pica	dermatologicos	
+189	Antif£ngico T¢pico	dermatologicos	
+190	Crema para Eczema	dermatologicos	
+191	Loci¢n Contra Caspa Severa	dermatologicos	
+192	Cicatrizante de Heridas	dermatologicos	
+193	Tratamiento Celulitis T¢pico	dermatologicos	
+194	Pack Protecci¢n Solar Verano	ofertas	
+195	Pack Cuidado Capilar Completo	ofertas	
+196	Kit Higiene Dental	ofertas	
+197	Pack Belleza Facial B sico	ofertas	
+198	Kit Primeros Auxilios Viajero	ofertas	

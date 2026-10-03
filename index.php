@@ -8,5 +8,10 @@ require_once __DIR__ . '/models/Pedido.php';
 require_once __DIR__ . '/models/Carrito.php';
 require_once __DIR__ . '/controllers/PageController.php';
 
+// Una vez al día, al abrir la app, envía sola el resumen de alertas de
+// inventario (stock bajo y por vencer) por Telegram.
+require_once __DIR__ . '/notificar_telegram_helper.php';
+ejecutarAlertasInventarioDiarias();
+
 $controller = new PageController();
 $controller->index();

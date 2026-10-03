@@ -33,6 +33,12 @@ class ProductoControlador extends Controlador {
             $this->error('Nombre de producto requerido');
             return;
         }
+        $descuento = (float) ($data['descuento_porcentaje'] ?? $data['discountPercent'] ?? 0);
+        $precioAnterior = $data['precio_anterior'] ?? $data['originalPrice'] ?? null;
+        if ($descuento < 0 || $descuento > 100 || ($precioAnterior !== null && $precioAnterior !== '' && (float) $precioAnterior < 0)) {
+            $this->error('Descuento o precio anterior inválido');
+            return;
+        }
         $model = new ProductoModelo();
         $id = $model->crear($data);
         if ($id) {
@@ -47,6 +53,12 @@ class ProductoControlador extends Controlador {
         $id = (int) ($data['id'] ?? 0);
         if (!$id) {
             $this->error('ID de producto requerido');
+            return;
+        }
+        $descuento = (float) ($data['descuento_porcentaje'] ?? $data['discountPercent'] ?? 0);
+        $precioAnterior = $data['precio_anterior'] ?? $data['originalPrice'] ?? null;
+        if ($descuento < 0 || $descuento > 100 || ($precioAnterior !== null && $precioAnterior !== '' && (float) $precioAnterior < 0)) {
+            $this->error('Descuento o precio anterior inválido');
             return;
         }
         $model = new ProductoModelo();

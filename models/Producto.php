@@ -56,9 +56,13 @@ class ProductoModelo {
             : null;
         // Inventario unificado en la unidad mínima (tableta para fraccionables, unidad normal para el resto)
         $stockTotalUnidades = (int) ($data['stock_total_units'] ?? $data['stock_total_unidades'] ?? $data['stockTotalUnits'] ?? $stock);
+        $descuento = max(0, min(100, (float) ($data['descuento_porcentaje'] ?? $data['discountPercent'] ?? 0)));
+        $precioAnteriorRaw = $data['precio_anterior'] ?? $data['originalPrice'] ?? null;
+        $precioAnterior = ($precioAnteriorRaw !== null && $precioAnteriorRaw !== '') ? max(0, (float) $precioAnteriorRaw) : null;
+        $precioAnteriorSql = $precioAnterior === null ? 'NULL' : (string) $precioAnterior;
 
-        $sql = "INSERT INTO productos (nombre, precio, stock, categoria, imagen, codigo_barras, lote, fecha_ingreso, fecha_vencimiento, cantidad_lote, descripcion, umbral_stock, es_fraccionable, unidades_por_caja, precio_caja, precio_unidad, stock_total_unidades, creado_en, actualizado_en)
-                VALUES ('{$nombre}', {$precio}, {$stock}, '{$categoria}', '{$imagen}', '{$codigoBarras}', '{$lote}', {$ingreso}, {$vencimiento}, {$cantidadLote}, '{$descripcion}', {$umbral}, {$esFraccionable}, " . ($unidadesPorCaja === null ? "NULL" : $unidadesPorCaja) . ", " . ($precioCaja === null ? "NULL" : $precioCaja) . ", " . ($precioUnidad === null ? "NULL" : $precioUnidad) . ", {$stockTotalUnidades}, NOW(), NOW())";
+        $sql = "INSERT INTO productos (nombre, precio, stock, categoria, imagen, codigo_barras, lote, fecha_ingreso, fecha_vencimiento, cantidad_lote, descripcion, umbral_stock, es_fraccionable, unidades_por_caja, precio_caja, precio_unidad, stock_total_unidades, precio_anterior, descuento_porcentaje, creado_en, actualizado_en)
+                VALUES ('{$nombre}', {$precio}, {$stock}, '{$categoria}', '{$imagen}', '{$codigoBarras}', '{$lote}', {$ingreso}, {$vencimiento}, {$cantidadLote}, '{$descripcion}', {$umbral}, {$esFraccionable}, " . ($unidadesPorCaja === null ? "NULL" : $unidadesPorCaja) . ", " . ($precioCaja === null ? "NULL" : $precioCaja) . ", " . ($precioUnidad === null ? "NULL" : $precioUnidad) . ", {$stockTotalUnidades}, {$precioAnteriorSql}, {$descuento}, NOW(), NOW())";
 
         if ($this->db->query($sql)) {
             return $this->db->insertId();
@@ -86,6 +90,8 @@ class ProductoModelo {
             'box_price' => ['precio_caja', 'float'], 'precio_caja' => ['precio_caja', 'float'], 'boxPrice' => ['precio_caja', 'float'],
             'unit_price' => ['precio_unidad', 'float'], 'precio_unidad' => ['precio_unidad', 'float'], 'unitPrice' => ['precio_unidad', 'float'],
             'stock_total_units' => ['stock_total_unidades', 'int'], 'stock_total_unidades' => ['stock_total_unidades', 'int'], 'stockTotalUnits' => ['stock_total_unidades', 'int'],
+            'precio_anterior' => ['precio_anterior', 'float'], 'originalPrice' => ['precio_anterior', 'float'],
+            'descuento_porcentaje' => ['descuento_porcentaje', 'float'], 'discountPercent' => ['descuento_porcentaje', 'float'],
         ];
 
         // Determinar si el producto es fraccionable (del payload o de la BD) para no des-sincronizar 'stock'
@@ -94,11 +100,18 @@ class ProductoModelo {
         $esFracc = $esFraccPayload || (!empty($prodActual['is_fractionable']) && $esFraccPayload !== false);
 
         foreach ($mapa as $key => [$col, $tipo]) {
-            if (!isset($data[$key])) continue;
+            if (!array_key_exists($key, $data)) continue;
             $val = $data[$key];
+            if ($col === 'precio_anterior' && ($val === null || $val === '')) {
+                $sets[] = '`precio_anterior` = NULL';
+                continue;
+            }
 
             if ($tipo === 'float') {
-                $sets[] = "`{$col}` = " . ((float) $val);
+                $numero = (float) $val;
+                if ($col === 'descuento_porcentaje') $numero = max(0, min(100, $numero));
+                if ($col === 'precio_anterior' && $numero < 0) $numero = 0;
+                $sets[] = "`{$col}` = " . $numero;
             } elseif ($tipo === 'fecha_ingreso' || $tipo === 'fecha_vencimiento') {
                 // Las fechas deben ir como string entre comillas, no como (float)
                 $sets[] = "`{$col}` = '" . $this->db->escape($val) . "'";
@@ -155,6 +168,9 @@ class ProductoModelo {
             'box_price' => $row['precio_caja'] !== null ? (float) $row['precio_caja'] : null,
             'unit_price' => $row['precio_unidad'] !== null ? (float) $row['precio_unidad'] : null,
             'stock_total_units' => (int) ($row['stock_total_unidades'] ?? (int) ($row['stock'] ?? 0)),
+            'precio_original' => (float) ($row['precio_anterior'] ?? $row['precio'] ?? 0),
+            'descuento_porcentaje' => max(0, min(100, (float) ($row['descuento_porcentaje'] ?? 0))),
+            'precio_final' => round((float) ($row['precio'] ?? 0) * (1 - max(0, min(100, (float) ($row['descuento_porcentaje'] ?? 0))) / 100), 2),
         ];
     }
 

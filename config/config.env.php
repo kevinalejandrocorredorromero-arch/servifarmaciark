@@ -36,6 +36,7 @@ return [
     'telegram' => [
         'bot_token' => getenv('TELEGRAM_BOT_TOKEN') ?: '',
         'chat_id' => getenv('TELEGRAM_CHAT_ID') ?: '',
+        'group_chat_id' => getenv('TELEGRAM_GROUP_CHAT_ID') ?: '',
         'umbral_bajo_stock' => (int) (getenv('TELEGRAM_UMBRAL_BAJO_STOCK') ?: 10),
     ],
     'brevo' => [

@@ -94,9 +94,19 @@ class PedidoControlador extends Controlador {
             }
         }
 
-        $orderNumber = $model->crear($data);
+        $orderNumber = $model->crear($data, $resumenPedido);
 
         if ($orderNumber) {
+            require_once __DIR__ . '/../notificar_telegram_helper.php';
+            notificarNuevoPedidoTelegram(
+                $orderNumber,
+                (float) ($resumenPedido['total'] ?? 0),
+                (string) ($data['paymentMethod'] ?? $data['metodo_pago'] ?? 'cash'),
+                $data['deliveryInfo'],
+                $resumenPedido['items'] ?? []
+            );
+            // Si la compra dejó algún producto en stock bajo, alerta aparte.
+            notificarStockBajoTrasPedido($resumenPedido['stock_transiciones'] ?? []);
             $this->success(['orderNumber' => $orderNumber]);
         } else {
             $this->error('Error al procesar el pedido');

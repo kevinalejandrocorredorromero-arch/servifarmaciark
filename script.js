@@ -32,10 +32,7 @@ async function appInit() {
   const qrEmpty = document.getElementById('qrEmpty')
   const qrMethodName = document.getElementById('qrMethodName')
   const qrAppName = document.getElementById('qrAppName')
-  const categoryProductsSection = document.getElementById('categoryProductsSection')
-  const categoryProductsGrid = document.getElementById('categoryProductsGrid')
   const productsWrapper = document.getElementById('productsWrapper')
-  const closeCategoryBtn = document.getElementById('closeCategoryBtn')
   const aboutMenuBtn = document.getElementById('aboutMenuBtn')
   const aboutSidebar = document.getElementById('aboutSidebar')
   const aboutSidebarOverlay = document.getElementById('aboutSidebarOverlay')
@@ -62,19 +59,27 @@ async function appInit() {
   const appBasePath = new URL('.', document.baseURI).pathname
 
   function productImageUrl(url, category = '', productId = '') {
+    const id = Number(productId)
+    if (Number.isInteger(id) && id > 0) {
+      // Los SVG locales son deterministas por producto y evitan que una URL
+      // repetida en la base termine mostrando la misma foto en varias tarjetas.
+      return `${appBasePath}images/products/producto-${id}.svg`
+    }
     if (url) return url.startsWith('images/products/') ? appBasePath + url : url
     const categoryImage = productFallbackImages[category]
-    const seed = Number(productId) || String(productId || '').length
+    const seed = String(productId || '').length
     const offset = seed % productFallbackPool.length
-    if (categoryImage && seed % 3 === 0) return categoryImage
-    return productFallbackPool[offset]
+    return categoryImage || productFallbackPool[offset]
   }
 
   function productImgHtml(url, name, cssClass = 'card-img-top', category = '', productId = '') {
     const src = productImageUrl(url, category, productId)
     const safeSrc = escapeHtml(src)
     const safeName = escapeHtml(name || 'Producto')
-    const fallback = escapeHtml(productFallbackPool[((Number(productId) || 0) + 1) % productFallbackPool.length])
+    const fallbackUrl = url && url.startsWith('images/products/')
+      ? appBasePath + url
+      : (url || productFallbackImages[category] || productFallbackPool[0])
+    const fallback = escapeHtml(fallbackUrl)
     return `<img src="${safeSrc}" class="${cssClass}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='${fallback}'">`
   }
   const deliveryName = document.getElementById('deliveryName')
@@ -241,27 +246,48 @@ async function appInit() {
       },
     })
 
-    productsSwiper = new Swiper('.products-swiper', {
-      slidesPerView: 'auto',
-      spaceBetween: 16,
-      loop: false,
-      navigation: { nextEl: '.products-next', prevEl: '.products-prev' },
-      breakpoints: {
-        320: { slidesPerView: 1.1, spaceBetween: 16 },
-        480: { slidesPerView: 1.5, spaceBetween: 16 },
-        768: { slidesPerView: 2.1, spaceBetween: 16 },
-        1024: { slidesPerView: 3.1, spaceBetween: 16 },
-        1200: { slidesPerView: 3.8, spaceBetween: 16 },
-      },
-      observer: true,
-      observeParents: true,
-    })
+    const productsSlider = document.querySelector('.products-swiper')
+    if (productsSlider) {
+      productsSwiper = new Swiper(productsSlider, {
+        slidesPerView: 'auto',
+        spaceBetween: 16,
+        loop: false,
+        navigation: { nextEl: '.products-next', prevEl: '.products-prev' },
+        breakpoints: {
+          320: { slidesPerView: 1.1, spaceBetween: 16 },
+          480: { slidesPerView: 1.5, spaceBetween: 16 },
+          768: { slidesPerView: 2.1, spaceBetween: 16 },
+          1024: { slidesPerView: 3.1, spaceBetween: 16 },
+          1200: { slidesPerView: 3.8, spaceBetween: 16 },
+        },
+        observer: true,
+        observeParents: true,
+      })
+    }
   }
 
   async function loadProducts() {
     try {
       const result = await apiClient.getProducts()
-      products = Array.isArray(result) ? result : []
+      const fetchedProducts = Array.isArray(result) ? result : []
+      // La API puede devolver un registro repetido tras una actualización. El catálogo
+      // debe mostrar una sola tarjeta por producto, conservando el primer registro.
+      const uniqueProducts = new Map()
+      fetchedProducts.forEach((product) => {
+        const fallbackKey = `${String(product?.name || '').trim().toLowerCase()}|${String(product?.category || '').trim().toLowerCase()}`
+        const key = fallbackKey === '|' ? `id:${Number(product?.id) || uniqueProducts.size}` : `name:${fallbackKey}`
+        const current = uniqueProducts.get(key)
+        const currentDiscount = Number(current?.descuento_porcentaje ?? 0)
+        const productDiscount = Number(product?.descuento_porcentaje ?? 0)
+        // Si hay copias del mismo producto, conserva la que tiene la oferta activa.
+        if (!current || productDiscount > currentDiscount) uniqueProducts.set(key, product)
+      })
+      products = [...uniqueProducts.values()]
+      const categoryFilter = document.getElementById('catalogCategoryFilter')
+      if (categoryFilter && categoryFilter.options.length === 1) {
+        const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort()
+        categories.forEach((category) => { const option = document.createElement('option'); option.value = category; option.textContent = categoryDisplayNames[category] || category; categoryFilter.appendChild(option) })
+      }
       renderProductsSlider()
     } catch (error) {
       console.error('Error cargando productos:', error)
@@ -269,46 +295,122 @@ async function appInit() {
     }
   }
 
-  function renderProductsSlider() {
-    if (!productsWrapper) return
-    const slideProducts = products
-    productsWrapper.innerHTML = slideProducts
-      .map(
-        (product) => `
-          <div class="swiper-slide">
-            <div class="card product-card h-100 cursor-pointer" style="cursor: pointer;" data-product-id="${product.id}">
-              ${productImgHtml(product.img, product.name, 'card-img-top', product.category, product.id)}
-              <div class="card-body d-flex flex-column">
-                <h6 class="card-title">${product.name}</h6>
-                <p class="text-primary fw-bold mb-2">${formatCurrency(product.price)}</p>
-                <div class="d-flex gap-2 mt-auto">
-                  <button class="btn btn-primary btn-sm flex-grow-1" onclick="event.stopPropagation(); addToCart(${product.id})">
-                    <i class="fa-solid fa-cart-plus"></i>
-                  </button>
-                  <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); showProductDetail(${product.id})" title="Ver detalles">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `,
-      )
-      .join('')
-    
-    // Agregar event listeners a las tarjetas
-    document.querySelectorAll('.product-card[data-product-id]').forEach(card => {
-      card.addEventListener('click', function() {
-        const productId = this.dataset.productId
-        showProductDetail(productId)
-      })
-    })
+  const PRODUCTS_PAGE_SIZE = 8
+  let productsVisibleCount = PRODUCTS_PAGE_SIZE
+  let filteredProductsCache = []
+  // Término activo desde el buscador (Enter); filtra el catálogo junto con los selects.
+  let catalogSearchTerm = ''
 
-    if (productsSwiper) {
-      productsSwiper.update()
-      productsSwiper.slideTo(0)
+  function syncCatalogHeader(count) {
+    const eyebrow = document.getElementById('catalogEyebrow')
+    const title = document.getElementById('productsTitle')
+    const category = document.getElementById('catalogCategoryFilter')?.value || ''
+    const stock = document.getElementById('catalogStockFilter')?.value || ''
+    const saleType = document.getElementById('catalogSaleTypeFilter')?.value || ''
+    const anyFilter = Boolean(category || stock || saleType || catalogSearchTerm)
+    document.getElementById('catalogClearFilters')?.classList.toggle('d-none', !anyFilter)
+    document.querySelectorAll('.rk-filter').forEach((chip) => {
+      const select = chip.querySelector('select')
+      chip.classList.toggle('is-active', Boolean(select?.value))
+    })
+    if (!eyebrow || !title) return
+    let label = 'Productos para tu bienestar'
+    if (category) { eyebrow.textContent = 'Categoría'; label = categoryDisplayNames[category] || category }
+    else if (catalogSearchTerm) { eyebrow.textContent = 'Resultados de búsqueda'; label = `"${catalogSearchTerm}"` }
+    else { eyebrow.textContent = 'Catálogo seleccionado' }
+    title.textContent = label
+    if (anyFilter) {
+      const badge = document.createElement('span')
+      badge.className = 'rk-title-count'
+      badge.textContent = String(count)
+      title.appendChild(badge)
     }
   }
+
+  function renderProductsSlider(resetVisible = true) {
+    if (!productsWrapper) return
+    if (resetVisible) productsVisibleCount = PRODUCTS_PAGE_SIZE
+    const category = document.getElementById('catalogCategoryFilter')?.value || ''
+    const stock = document.getElementById('catalogStockFilter')?.value || ''
+    const saleType = document.getElementById('catalogSaleTypeFilter')?.value || ''
+    const term = catalogSearchTerm.toLowerCase()
+    const filtered = products.filter((product) => {
+      const hasStock = Number(product.stock_total_units ?? product.stock ?? 0) > 0
+      const formula = Boolean(product.requiere_formula || product.requires_prescription || product.formula_medica)
+      const discount = Math.max(0, Math.min(100, Number(product.descuento_porcentaje ?? 0)))
+      const matchesSaleType = !saleType
+        || (saleType === 'offers' ? discount > 0 : saleType === 'formula' ? formula : !formula)
+      const matchesTerm = !term || `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase().includes(term)
+      return matchesTerm && (!category || product.category === category) && (!stock || (stock === 'available' ? hasStock : !hasStock)) && matchesSaleType
+    })
+    filteredProductsCache = filtered
+    const visibleProducts = filtered.slice(0, productsVisibleCount)
+    const emptyState = document.getElementById('productsEmptyState')
+    const loadMoreBtn = document.getElementById('loadMoreProductsBtn')
+    const progress = document.getElementById('catalogProgress')
+    emptyState?.classList.toggle('d-none', filtered.length > 0)
+    productsWrapper.classList.toggle('d-none', filtered.length === 0)
+    loadMoreBtn?.classList.toggle('d-none', visibleProducts.length >= filtered.length)
+    if (progress) progress.textContent = filtered.length > 0 ? `Mostrando ${visibleProducts.length} de ${filtered.length} productos` : ''
+    productsWrapper.innerHTML = visibleProducts.map((product) => {
+      const basePrice = Number(product.price ?? 0)
+      const discount = Math.max(0, Math.min(100, Number(product.descuento_porcentaje ?? 0)))
+      const original = Number(product.precio_original ?? product.precio_anterior ?? basePrice)
+      const finalPrice = Number(product.precio_final ?? (discount > 0 ? basePrice * (1 - discount / 100) : basePrice))
+      const hasStock = Number(product.stock_total_units ?? product.stock ?? 0) > 0
+      const formula = Boolean(product.requiere_formula || product.requires_prescription || product.formula_medica)
+      return `<div class="col">
+        <article class="card product-card h-100" data-product-id="${product.id}">
+          <div class="product-card-media position-relative">${productImgHtml(product.img, product.name, 'card-img-top', product.category, product.id)}${discount > 0 ? `<span class="product-badge sale-badge">-${discount}%</span>` : ''}${formula ? '<span class="product-badge formula-badge">Fórmula</span>' : ''}</div>
+          <div class="card-body d-flex flex-column">
+            <span class="product-category">${escapeHtml(product.category || 'Salud')}</span>
+            <h3 class="card-title h6">${escapeHtml(product.name || 'Producto')}</h3>
+            <div class="product-price-row mb-3">${discount > 0 ? `<del class="product-old-price">${formatCurrency(original)}</del>` : ''}<strong class="product-price">${formatCurrency(finalPrice)}</strong></div>
+            <div class="d-flex gap-2 mt-auto"><div class="product-qty-control" aria-label="Cantidad"><button type="button" class="btn btn-light product-card-minus-${product.id}" aria-label="Restar cantidad">−</button><span id="product-card-qty-${product.id}">1</span><button type="button" class="btn btn-light product-card-plus-${product.id}" aria-label="Sumar cantidad">+</button></div><button class="btn btn-primary flex-grow-1" ${hasStock ? '' : 'disabled'} onclick="event.stopPropagation(); addToCart(${product.id}, Number(document.getElementById('product-card-qty-${product.id}')?.textContent || 1))"><i class="fa-solid fa-cart-plus me-1"></i>Agregar</button></div>
+            <button class="btn btn-link btn-sm mt-2 p-0 text-start" onclick="event.stopPropagation(); showProductDetail(${product.id})">Ver detalles</button>
+          </div>
+        </article>
+      </div>`
+    }).join('')
+    visibleProducts.forEach((product) => {
+      const qty = document.getElementById(`product-card-qty-${product.id}`)
+      document.querySelector(`.product-card-minus-${product.id}`)?.addEventListener('click', (event) => { event.stopPropagation(); qty.textContent = String(Math.max(1, Number(qty.textContent) - 1)) })
+      document.querySelector(`.product-card-plus-${product.id}`)?.addEventListener('click', (event) => { event.stopPropagation(); qty.textContent = String(Number(qty.textContent) + 1) })
+    })
+    document.querySelectorAll('.product-card[data-product-id]').forEach(card => card.addEventListener('click', () => showProductDetail(card.dataset.productId)))
+    syncCatalogHeader(filtered.length)
+  }
+
+  function loadMoreProducts() {
+    if (productsVisibleCount >= filteredProductsCache.length) return
+    productsVisibleCount += PRODUCTS_PAGE_SIZE
+    renderProductsSlider(false)
+  }
+
+  document.getElementById('loadMoreProductsBtn')?.addEventListener('click', loadMoreProducts)
+  document.getElementById('catalogCategoryFilter')?.addEventListener('change', () => renderProductsSlider(true))
+  document.getElementById('catalogStockFilter')?.addEventListener('change', () => renderProductsSlider(true))
+  document.getElementById('catalogSaleTypeFilter')?.addEventListener('change', () => renderProductsSlider(true))
+  document.getElementById('catalogClearFilters')?.addEventListener('click', () => {
+    catalogSearchTerm = ''
+    ;['catalogCategoryFilter', 'catalogStockFilter', 'catalogSaleTypeFilter'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = '' })
+    renderProductsSlider(true)
+  })
+
+  function renderSearchResults() {
+    const input = document.getElementById('searchInput')
+    const dropdown = document.getElementById('searchResultsDropdown')
+    if (!input || !dropdown) return
+    const query = input.value.trim().toLowerCase()
+    if (!query) { dropdown.classList.add('d-none'); input.setAttribute('aria-expanded', 'false'); return }
+    const matches = products.filter((p) => `${p.name || ''} ${p.category || ''} ${p.description || ''}`.toLowerCase().includes(query)).slice(0, 8)
+    dropdown.innerHTML = matches.length ? matches.map((p) => `<button type="button" class="rk-search-option" role="option" data-product-id="${Number(p.id)}"><span><strong>${escapeHtml(p.name || 'Producto')}</strong><small>${escapeHtml(p.category || '')} · ${formatCurrency(p.precio_final ?? p.price)}</small></span></button>`).join('') : '<div class="p-3 text-muted small">No encontramos ese producto.</div>'
+    dropdown.querySelectorAll('[data-product-id]').forEach((button) => button.addEventListener('click', () => { showProductDetail(button.dataset.productId); dropdown.classList.add('d-none'); input.setAttribute('aria-expanded', 'false') }))
+    dropdown.classList.remove('d-none'); input.setAttribute('aria-expanded', 'true')
+  }
+  document.getElementById('searchInput')?.addEventListener('input', renderSearchResults)
+  document.addEventListener('click', (event) => { if (!event.target.closest('.rk-search-wrap')) { document.getElementById('searchResultsDropdown')?.classList.add('d-none'); document.getElementById('searchInput')?.setAttribute('aria-expanded', 'false') } })
+  document.getElementById('searchInput')?.addEventListener('keydown', (event) => { if (event.key === 'Escape') { event.currentTarget.value = ''; renderSearchResults() } })
 
   async function loadCart() {
     try {
@@ -387,16 +489,41 @@ async function appInit() {
     if (cartCount) cartCount.textContent = totalQuantity
     const badge = document.getElementById('cartCountBadge')
     if (badge) badge.textContent = totalQuantity
+    const drawerBadge = document.getElementById('cartDrawerCount')
+    if (drawerBadge) drawerBadge.textContent = totalQuantity
+    const mobileBadge = document.getElementById('mobileCartCount')
+    if (mobileBadge) mobileBadge.textContent = totalQuantity
 
-    if (!cartItems || !cartEmpty) return
+    const drawerItems = document.getElementById('cartDrawerItems')
+    const drawerEmpty = document.getElementById('cartDrawerEmpty')
+    const totalEl = document.getElementById('cartTotal')
+    const drawerTotal = document.getElementById('cartDrawerTotal')
+    const headerSubtotal = document.getElementById('headerCartSubtotal')
+    const progress = document.getElementById('shippingProgressBar')
+    const progressValue = document.getElementById('shippingProgressValue')
+    const shippingMessage = document.getElementById('shippingMessage')
+
     if (cart.length === 0) {
-      cartEmpty.style.display = 'block'
-      cartItems.style.display = 'none'
-      cartItems.innerHTML = ''
-      const totalEl = document.getElementById('cartTotal')
+      if (cartEmpty) cartEmpty.style.display = 'block'
+      if (cartItems) {
+        cartItems.style.display = 'none'
+        cartItems.innerHTML = ''
+      }
+      if (drawerItems) drawerItems.innerHTML = ''
+      if (drawerEmpty) drawerEmpty.classList.remove('d-none')
       if (totalEl) totalEl.textContent = formatCurrency(0)
+      if (drawerTotal) drawerTotal.textContent = formatCurrency(0)
+      if (headerSubtotal) headerSubtotal.textContent = formatCurrency(0)
+      if (progress) {
+        progress.style.width = '0%'
+        progress.parentElement?.setAttribute('aria-valuenow', '0')
+      }
+      if (progressValue) progressValue.textContent = formatCurrency(0)
+      if (shippingMessage) shippingMessage.textContent = 'Agrega productos para calcular el envío'
       return
     }
+
+    if (!cartItems || !cartEmpty) return
 
     cartEmpty.style.display = 'none'
     cartItems.style.display = 'block'
@@ -435,8 +562,18 @@ async function appInit() {
       })
       .join('')
 
-    const totalEl = document.getElementById('cartTotal')
     if (totalEl) totalEl.textContent = formatCurrency(cartTotal)
+    if (headerSubtotal) headerSubtotal.textContent = formatCurrency(cartTotal)
+    if (drawerTotal) drawerTotal.textContent = formatCurrency(cartTotal)
+    if (drawerItems) {
+      drawerItems.innerHTML = cartItems.innerHTML
+      if (drawerEmpty) drawerEmpty.classList.add('d-none')
+    }
+    const threshold = 80000
+    const percent = Math.min(100, Math.round((cartTotal / threshold) * 100))
+    if (progress) { progress.style.width = `${percent}%`; progress.parentElement?.setAttribute('aria-valuenow', String(percent)) }
+    if (progressValue) progressValue.textContent = formatCurrency(cartTotal)
+    if (shippingMessage) shippingMessage.textContent = cartTotal >= threshold ? 'Tienes envío gratis' : `Agrega ${formatCurrency(threshold - cartTotal)} más para envío gratis`
   }
 
   window.addToCart = async function (productId, requestedQty = 1, options = {}) {
@@ -551,7 +688,7 @@ async function appInit() {
     detailImg.alt = product.name || 'Producto'
     detailImg.style.display = ''
     detailImg.onerror = () => { detailImg.onerror = null; detailImg.src = productImageUrl('', product.category, Number(product.id) + 1) }
-    document.getElementById('productDetailPrice').textContent = formatCurrency(product.price)
+    document.getElementById('productDetailPrice').textContent = formatCurrency(product.precio_final ?? product.price)
     document.getElementById('productDetailCategory').textContent = categoryDisplayNames[product.category] || product.category
     document.getElementById('productDetailDescription').textContent = product.description || 'Sin descripción disponible'
     
@@ -797,16 +934,17 @@ async function appInit() {
       else if (userData.es_vendedor || userData.isSeller) role = 'seller'
       else role = 'customer'
     }
+    const nombre = `<span class="acc-name d-none d-xl-inline ms-2">${userData.name}</span>`
     if (role === 'admin') {
-      accountBtn.innerHTML = `<i class="fa-solid fa-user-shield text-warning"></i> ${userData.name}`
+      accountBtn.innerHTML = `<i class="fa-solid fa-user-shield text-warning"></i>${nombre}`
       accountBtn.title = 'Panel de Administrador'
       accountBtn.onclick = showAdminMenu
     } else if (role === 'seller') {
-      accountBtn.innerHTML = `<i class="fa-solid fa-user-tag text-primary"></i> ${userData.name}`
+      accountBtn.innerHTML = `<i class="fa-solid fa-user-tag text-primary"></i>${nombre}`
       accountBtn.title = 'Panel de Vendedor'
       accountBtn.onclick = showSellerMenu
     } else {
-      accountBtn.innerHTML = `<i class="fa-solid fa-user"></i> ${userData.name}`
+      accountBtn.innerHTML = `<i class="fa-solid fa-user"></i>${nombre}`
       accountBtn.title = 'Mi cuenta'
       accountBtn.onclick = showUserMenu
     }
@@ -2457,6 +2595,9 @@ async function appInit() {
     productFormTitle.textContent = 'Editar Producto'
     document.getElementById('productName').value = product.name || ''
     document.getElementById('productPrice').value = Number(product.price) || 0
+    document.getElementById('productOriginalPrice').value = Number(product.precio_original) || ''
+    document.getElementById('productDiscount').value = Number(product.descuento_porcentaje) || 0
+    actualizarVistaPreviaDescuento()
     document.getElementById('productStock').value = Number(product.stock) || 0
     document.getElementById('productCategory').value = product.category || ''
     document.getElementById('productDescription').value = product.description || ''
@@ -2495,11 +2636,26 @@ async function appInit() {
   }
 
   const saveProductBtn = document.getElementById('saveProductBtn')
+  function actualizarVistaPreviaDescuento() {
+    const price = Number.parseFloat(document.getElementById('productPrice')?.value) || 0
+    const original = Number.parseFloat(document.getElementById('productOriginalPrice')?.value) || price
+    const discount = Math.max(0, Math.min(100, Number.parseFloat(document.getElementById('productDiscount')?.value) || 0))
+    const preview = document.getElementById('productDiscountPreview')
+    if (!preview) return
+    preview.classList.toggle('d-none', discount <= 0)
+    preview.textContent = discount > 0 ? `Vista previa: ${formatCurrency(original)} → ${formatCurrency(original * (1 - discount / 100))}` : ''
+  }
+  document.getElementById('productPrice')?.addEventListener('input', actualizarVistaPreviaDescuento)
+  document.getElementById('productOriginalPrice')?.addEventListener('input', actualizarVistaPreviaDescuento)
+  document.getElementById('productDiscount')?.addEventListener('input', actualizarVistaPreviaDescuento)
+
   async function guardarProducto() {
     const btn = saveProductBtn
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Guardando...' }
     const name = document.getElementById('productName').value.trim()
     const price = Number.parseFloat(document.getElementById('productPrice').value)
+    const originalPrice = Number.parseFloat(document.getElementById('productOriginalPrice')?.value) || null
+    const discountPercent = Math.max(0, Math.min(100, Number.parseFloat(document.getElementById('productDiscount')?.value) || 0))
     const stock = Number.parseInt(document.getElementById('productStock').value)
     const category = document.getElementById('productCategory').value
     const description = document.getElementById('productDescription').value.trim()
@@ -2517,6 +2673,8 @@ async function appInit() {
     const productData = {
       name,
       price,
+      precio_anterior: discountPercent > 0 ? originalPrice : null,
+      descuento_porcentaje: discountPercent,
       stock,
       category,
       description,
@@ -2616,74 +2774,27 @@ async function appInit() {
   }
 
   function displaySearchResults(results, searchTerm) {
-    const categoryTitle = document.getElementById('categoryTitle')
-    if (categoryTitle) {
-      categoryTitle.innerHTML = `Resultados de búsqueda: "${searchTerm}" <span class="badge bg-primary">${results.length}</span>`
-    }
-    if (!categoryProductsGrid || !categoryProductsSection) return
-    categoryProductsGrid.innerHTML = results
-      .map(
-        (product) => `
-          <div class="col-6 col-md-4 col-lg-3">
-            <div class="card product-card h-100 cursor-pointer" style="cursor: pointer;" data-product-id="${product.id}">
-              ${productImgHtml(product.img, product.name, 'card-img-top', product.category, product.id)}
-              <div class="card-body d-flex flex-column">
-                <h6 class="card-title">${product.name}</h6>
-                <p class="text-primary fw-bold">${formatCurrency(product.price)}</p>
-                <div class="d-flex gap-2 mt-auto">
-                  <button class="btn btn-primary btn-sm flex-grow-1" onclick="event.stopPropagation(); addToCart(${product.id})">
-                    <i class="fa-solid fa-cart-plus me-1"></i> Agregar
-                  </button>
-                  <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); showProductDetail(${product.id})" title="Ver detalles">
-                    <i class="fa-solid fa-eye"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `,
-      )
-      .join('')
-    categoryProductsSection.style.display = 'block'
-    categoryProductsSection.scrollIntoView({ behavior: 'smooth' })
+    catalogSearchTerm = searchTerm
+    ;['catalogCategoryFilter', 'catalogStockFilter', 'catalogSaleTypeFilter'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = '' })
+    renderProductsSlider(true)
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   function showCategoryProducts(category) {
-    if (!categoryProductsGrid || !categoryProductsSection) return
-    const items = products.filter((product) => product.category === category)
-    const categoryTitle = document.getElementById('categoryTitle')
-    if (categoryTitle) {
-      categoryTitle.textContent = categoryDisplayNames[category] || category
+    catalogSearchTerm = ''
+    ;['catalogStockFilter', 'catalogSaleTypeFilter'].forEach((id) => { const el = document.getElementById(id); if (el) el.value = '' })
+    const filter = document.getElementById('catalogCategoryFilter')
+    if (filter) {
+      if (![...filter.options].some((option) => option.value === category)) {
+        const option = document.createElement('option')
+        option.value = category
+        option.textContent = categoryDisplayNames[category] || category
+        filter.appendChild(option)
+      }
+      filter.value = category
     }
-    if (items.length === 0) {
-      categoryProductsGrid.innerHTML = '<div class="col-12 text-center text-muted">No hay productos en esta categoría.</div>'
-    } else {
-      categoryProductsGrid.innerHTML = items
-        .map(
-          (product) => `
-            <div class="col-6 col-md-4 col-lg-3">
-              <div class="card product-card h-100 cursor-pointer" style="cursor: pointer;" data-product-id="${product.id}">
-                ${productImgHtml(product.img, product.name, 'card-img-top', product.category, product.id)}
-                <div class="card-body d-flex flex-column">
-                  <h6 class="card-title">${product.name}</h6>
-                  <p class="text-primary fw-bold">${formatCurrency(product.price)}</p>
-                  <div class="d-flex gap-2 mt-auto">
-                    <button class="btn btn-primary btn-sm flex-grow-1" onclick="event.stopPropagation(); addToCart(${product.id})">
-                      <i class="fa-solid fa-cart-plus me-1"></i> Agregar
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); showProductDetail(${product.id})" title="Ver detalles">
-                      <i class="fa-solid fa-eye"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `,
-        )
-        .join('')
-    }
-    categoryProductsSection.style.display = 'block'
-    categoryProductsSection.scrollIntoView({ behavior: 'smooth' })
+    renderProductsSlider(true)
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   function initEventListeners() {
@@ -2733,9 +2844,6 @@ async function appInit() {
     registerModal?.addEventListener('hidden.bs.modal', ocultarPanelReenvio)
     document.getElementById('editProfileForm')?.addEventListener('submit', handleEditProfileSubmit)
     document.getElementById('refreshMyOrdersBtn')?.addEventListener('click', loadMyOrders)
-    closeCategoryBtn?.addEventListener('click', () => {
-      if (categoryProductsSection) categoryProductsSection.style.display = 'none'
-    })
     aboutMenuBtn?.addEventListener('click', () => {
       aboutSidebar?.classList.add('active')
       aboutSidebarOverlay?.classList.add('active')
@@ -2765,6 +2873,8 @@ async function appInit() {
       })
     })
     document.getElementById('proceedToCheckout')?.addEventListener('click', showCheckoutModal)
+    document.getElementById('proceedToCheckoutDrawer')?.addEventListener('click', showCheckoutModal)
+    document.getElementById('searchClearBtn')?.addEventListener('click', () => { if (searchInput) { searchInput.value = ''; searchInput.dispatchEvent(new Event('input')); searchInput.focus() } })
     confirmOrderBtn?.addEventListener('click', handleCheckout)
     filterSalesBtn?.addEventListener('click', (e) => {
       e.preventDefault()

@@ -35,7 +35,7 @@
         <p class="text-white-50 mb-2"><i class="fa-solid fa-phone me-2"></i>3115631854</p>
         <p class="text-white-50 mb-2"><i class="fa-solid fa-envelope me-2"></i>info@servifarmaciark.com</p>
         <p class="text-white-50 mb-2"><i class="fa-solid fa-location-dot me-2"></i>Cra. 67 # 61- 24, Bogotá, Colombia</p>
-        <p class="text-white-50"><i class="fa-solid fa-clock me-2"></i>Lun - Sáb: 8:00 AM - 8:00 PM</p>
+        <p class="text-white-50"><i class="fa-solid fa-clock me-2"></i>Lun - Dom: 8:00 AM - 8:00 PM</p>
       </div>
     </div>
     <hr class="my-4 border-secondary">

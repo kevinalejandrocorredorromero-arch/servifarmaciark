@@ -11,6 +11,7 @@ _backup_xampp_local/
 # Logs generados en tiempo de ejecucion
 logs/*.log
 logs/firebase_certs.json
+logs/ultima_alerta_inventario.txt
 
 # Sistema operativo y editor
 .DS_Store

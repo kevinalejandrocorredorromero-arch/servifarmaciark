@@ -10,7 +10,7 @@ Tienda online de farmacia construida en PHP plano con arquitectura MVC ligera, M
 - Autenticación propia (contraseña + CSRF) y login con Google vía Firebase Authentication
 - Verificación de correo electrónico con Brevo
 - Notificaciones de inventario por Telegram (stock bajo y vencimientos)
-- Asistente de chat con IA (API de HuggingFace)
+- Asistente de chat con IA (API de Google Gemini, clave gratuita de Google AI Studio)
 
 ## Requisitos
 
@@ -21,7 +21,7 @@ Tienda online de farmacia construida en PHP plano con arquitectura MVC ligera, M
 ## Instalación local (XAMPP)
 
 1. Clonar el proyecto dentro de `htdocs`.
-2. Copiar `config/config.example.php` a `config/config.php` y completar credenciales (BD, HuggingFace, Firebase, Telegram, Brevo). Este archivo nunca se sube al repositorio.
+2. Copiar `config/config.example.php` a `config/config.php` y completar credenciales (BD, Google AI Studio, Firebase, Telegram, Brevo). Este archivo nunca se sube al repositorio.
 3. Crear la base de datos y cargar el esquema:
 
    ```bash

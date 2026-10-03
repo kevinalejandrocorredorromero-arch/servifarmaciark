@@ -66,29 +66,44 @@ class ChatController extends Controlador {
         $payload = [
             'model' => $model,
             'messages' => $messages,
-            'max_tokens' => 1024,
+            // Gemini gasta parte de este presupuesto en razonamiento interno:
+            // con muy pocos tokens puede responder vacío.
+            'max_tokens' => 2048,
             'temperature' => 0.7,
         ];
 
-        $ch = curl_init($apiUrl);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $apiKey,
-            ],
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_CONNECTTIMEOUT => 8,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-        ]);
+        // Google a veces devuelve 429/5xx por picos de demanda: reintentamos una
+        // vez tras una breve espera antes de fallarle al usuario.
+        $httpCode = 0;
+        $response = false;
+        $curlError = '';
+        for ($intento = 1; $intento <= 2; $intento++) {
+            $ch = curl_init($apiUrl);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $apiKey,
+                ],
+                CURLOPT_TIMEOUT => 25,
+                CURLOPT_CONNECTTIMEOUT => 8,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+            if ($curlError === '' && !in_array($httpCode, [429, 500, 502, 503, 504], true)) {
+                break;
+            }
+            if ($intento === 1) {
+                sleep(2);
+            }
+        }
 
         if ($curlError) {
             error_log('[chat] Error cURL del proveedor: ' . $curlError);
@@ -97,13 +112,14 @@ class ChatController extends Controlador {
         }
 
         if ($httpCode !== 200) {
-            error_log('[chat] Proveedor respondió HTTP ' . $httpCode);
+            error_log('[chat] Proveedor respondió HTTP ' . $httpCode . ': ' . substr((string) $response, 0, 500));
             $this->error('El asistente no está disponible temporalmente.', 502);
             return;
         }
 
         $result = json_decode($response, true);
         if (!$result || empty($result['choices'][0]['message']['content'])) {
+            error_log('[chat] Respuesta sin contenido del proveedor: ' . substr((string) $response, 0, 500));
             $this->error('No se pudo generar una respuesta', 500);
             return;
         }
@@ -192,7 +208,7 @@ class ChatController extends Controlador {
         $prompt .= "6. Si preguntan por un producto que NO aparece en el INVENTARIO DISPONIBLE de arriba, responde solo: \"Ese producto no está disponible actualmente.\" Sin sugerir otros productos. IMPORTANTE: si el producto SÍ aparece en el inventario, confirmalo como disponible y nunca digas que no tienes información sobre él.\n";
         $prompt .= "7. Si preguntan por dirección, teléfono, horario, correo, misión, visión, términos o políticas, responde únicamente con la información de la droguería de arriba.\n";
         $prompt .= "8. Responde SOLO lo que te preguntan, de forma breve y directa. No añadas información extra ni productos no solicitados.\n";
-        $prompt .= "9. Responde SIEMPRE en español, claro, amable y profesional.\n";
+        $prompt .= "9. Responde SIEMPRE en español, claro, amable y profesional. NO uses formato markdown (nada de asteriscos, almohadillas ni guiones de lista): escribe texto plano, y si listas productos usa una línea por producto empezando con un guion simple.\n";
         $prompt .= "10. Si la pregunta no tiene relación con productos, la droguería o sus servicios, di: \"Solo puedo brindarte información sobre nuestros productos y la droguería.\"\n\n";
         $prompt .= "INVENTARIO DISPONIBLE:\n" . $productContext;
         return $prompt;

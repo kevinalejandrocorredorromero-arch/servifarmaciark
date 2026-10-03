@@ -9,10 +9,10 @@ return [
         'charset' => 'utf8',
     ],
     'ai' => [
-        'provider' => 'huggingface',
-        'api_key' => 'COLOCA_AQUI_TU_HUGGINGFACE_API_KEY',
-        'model' => 'meta-llama/Llama-3.1-8B-Instruct',
-        'api_url' => 'https://router.huggingface.co/v1/chat/completions',
+        'provider' => 'gemini',
+        'api_key' => 'COLOCA_AQUI_TU_CLAVE_DE_GOOGLE_AI_STUDIO',
+        'model' => 'gemini-3.5-flash-lite',
+        'api_url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     ],
     'app' => [
         'name' => 'SERVIFARMACIA RK',

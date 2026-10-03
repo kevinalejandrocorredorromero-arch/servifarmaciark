@@ -14,10 +14,10 @@ return [
         'ssl' => in_array(strtolower((string) getenv('DB_SSL')), ['1', 'true', 'yes'], true),
     ],
     'ai' => [
-        'provider' => 'huggingface',
+        'provider' => 'gemini',
         'api_key' => getenv('AI_API_KEY') ?: '',
-        'model' => getenv('AI_MODEL') ?: 'meta-llama/Llama-3.1-8B-Instruct',
-        'api_url' => getenv('AI_API_URL') ?: 'https://router.huggingface.co/v1/chat/completions',
+        'model' => getenv('AI_MODEL') ?: 'gemini-3.5-flash-lite',
+        'api_url' => getenv('AI_API_URL') ?: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     ],
     'app' => [
         'name' => getenv('APP_NAME') ?: 'SERVIFARMACIA RK',

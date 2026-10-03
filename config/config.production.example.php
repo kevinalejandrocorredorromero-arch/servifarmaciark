@@ -11,10 +11,10 @@ return [
         'ssl' => false,
     ],
     'ai' => [
-        'provider' => 'huggingface',
+        'provider' => 'gemini',
         'api_key' => 'CHANGE_ME_OR_DISABLE_CHAT',
-        'model' => 'meta-llama/Llama-3.1-8B-Instruct',
-        'api_url' => 'https://router.huggingface.co/v1/chat/completions',
+        'model' => 'gemini-3.5-flash-lite',
+        'api_url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     ],
     'app' => [
         'name' => 'SERVIFARMACIA RK',

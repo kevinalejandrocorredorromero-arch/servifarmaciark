@@ -3136,9 +3136,11 @@ function initChat() {
     messages.scrollTop = messages.scrollHeight
 
     try {
+      // chat.php exige CSRF si hay sesión iniciada: mandamos el token del meta.
+      const csrf = document.querySelector('meta[name="csrf-token"]')?.content || ''
       const res = await fetch('chat.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: csrf ? { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf } : { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text, history: history.slice(0, -1) }),
       })
       const data = await res.json()

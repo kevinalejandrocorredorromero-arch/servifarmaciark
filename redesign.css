@@ -2066,26 +2066,24 @@ footer small { color: var(--ink-500); font-size: 0.8rem; }
   /* Los bullets de paginacion conservan su area tactil real (Swiper los
      marca como role=button), solo se Achican visualmente. */
   .categories-pagination,
-  .brands-pagination { padding-bottom: 20px; }
+  .brands-pagination { padding-bottom: 12px; }
 
   .swiper-pagination-bullet {
-    width: 44px;
-    height: 44px;
-    background: transparent;
+    width: 8px;
+    height: 8px;
+    background: var(--ink-300);
+    border-radius: 50%;
     position: relative;
+    opacity: 1;
+    margin: 0 5px !important;
+    transition: background var(--t-base) var(--ease-out), transform var(--t-base) var(--ease-out);
   }
 
-  .swiper-pagination-bullet::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 7px;
-    height: 7px;
-    border-radius: var(--radius-pill);
-    background: var(--ink-400);
-    transition: width var(--t-base) var(--ease-out), background-color var(--t-base) var(--ease-out);
+  .swiper-pagination-bullet::after { display: none; }
+
+  .swiper-pagination-bullet-active {
+    background: var(--brand);
+    transform: scale(1.3);
   }
 
   .swiper-pagination-bullet-active::after {

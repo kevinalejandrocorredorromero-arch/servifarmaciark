@@ -33,8 +33,8 @@ $firebasePublico = json_encode([
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="redesign.css">
+  <link rel="stylesheet" href="style.css?v=<?= filemtime(__DIR__ . '/../style.css') ?>">
+  <link rel="stylesheet" href="redesign.css?v=<?= filemtime(__DIR__ . '/../redesign.css') ?>">
   <script>window.RK_FIREBASE_CONFIG = <?= $firebasePublico ?>;</script>
 </head>
 <body>

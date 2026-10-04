@@ -771,6 +771,12 @@ section.py-5,
 .products-section { background: rgba(255, 255, 255, 0.72); }
 .brands-section { background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), transparent); }
 
+/* Categorías y catálogo comparten superficie blanca: entre ellas basta un
+   respiro compacto. El padding fluido --section-y queda para separar bloques
+   que sí son visualmente distintos. */
+.categories-section { padding-bottom: 1.5rem; }
+.products-section { padding-top: 1.5rem; }
+
 .section-eyebrow { margin-bottom: 0.75rem; }
 
 .section-title {
@@ -791,7 +797,7 @@ section.py-5,
 
 /* Swiper gestiona su propio scroll: overflow hidden es obligatorio para que
    overflow-x: visible no exponga los slides fuera del viewport. */
-.categories-swiper { padding: 0.5rem 0.25rem 3rem; overflow: hidden; }
+.categories-swiper { padding: 0 0.25rem; overflow: hidden; }
 .categories-swiper .swiper-slide { height: auto; }
 
 /* Swiper pone position:relative en el carrusel, asi que las flechas se miden

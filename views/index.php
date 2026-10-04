@@ -27,14 +27,18 @@ $firebasePublico = json_encode([
   <link rel="icon" type="image/png" sizes="192x192" href="images/favicon-192x192.png">
   <link rel="apple-touch-icon" href="images/favicon-192x192.png">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="redesign.css">
   <script>window.RK_FIREBASE_CONFIG = <?= $firebasePublico ?>;</script>
 </head>
 <body>
+  <a class="skip-link" href="#products">Saltar al catálogo de productos</a>
 
   <?php require __DIR__ . '/partials/encabezado.php'; ?>
 

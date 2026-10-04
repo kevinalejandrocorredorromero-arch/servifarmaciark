@@ -12,7 +12,10 @@
               <a class="btn btn-rk-light" href="#categories">Explorar categorías</a>
             </div>
           </div>
-          <div class="rk-hero-art" aria-hidden="true"><i class="fa-solid fa-prescription-bottle-medical"></i></div>
+          <div class="rk-hero-art" aria-hidden="true">
+            <div class="rk-hero-art-ring"></div>
+            <i class="fa-solid fa-prescription-bottle-medical"></i>
+          </div>
         </div>
       </div>
       <div class="col-lg-4">
@@ -23,7 +26,7 @@
           <p>Envíanos los detalles de tu fórmula y te ayudamos a encontrar disponibilidad y precio.</p>
           <div class="d-grid gap-2 mt-auto">
             <a class="btn btn-primary" href="https://wa.me/573115631854?text=Hola%20SERVIFARMACIA%20RK,%20quiero%20cotizar%20una%20receta" target="_blank" rel="noopener" aria-label="Cotizar receta por WhatsApp"><i class="fa-brands fa-whatsapp me-2"></i>Cotizar por WhatsApp</a>
-            <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#helpModal">Necesito orientación</button>
+            <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#faqModal">Necesito orientación</button>
           </div>
         </article>
       </div>

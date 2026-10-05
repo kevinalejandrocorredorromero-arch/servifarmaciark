@@ -7,19 +7,16 @@
 
 if (!function_exists('enviarAlertaTelegram')) {
     /**
-     * Envía un mensaje de texto a un chat de Telegram usando la API HTTP.
-     * @return bool true si se envió correctamente
+     * Llama cualquier método de la API de Telegram (sendMessage, editMessageText,
+     * answerCallbackQuery, ...) por POST. Devuelve la respuesta decodificada o
+     * ['ok' => false] si falló (el error queda en error_log).
      */
-    function enviarAlertaTelegram(string $botToken, string $chatId, string $texto): bool {
-        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-        $payload = http_build_query([
-            'chat_id' => $chatId,
-            'text'    => $texto,
-        ]);
+    function llamarApiTelegram(string $botToken, string $metodo, array $params = []): array {
+        $url = "https://api.telegram.org/bot{$botToken}/{$metodo}";
 
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
         curl_setopt($ch, CURLOPT_TIMEOUT, 15);
@@ -30,17 +27,42 @@ if (!function_exists('enviarAlertaTelegram')) {
         curl_close($ch);
 
         if ($response === false) {
-            error_log("Telegram curl error (HTTP {$httpCode}): {$curlErr}");
-            return false;
+            error_log("Telegram curl error ({$metodo}, HTTP {$httpCode}): {$curlErr}");
+            return ['ok' => false];
         }
 
         $data = json_decode($response, true);
         if (!is_array($data) || ($data['ok'] ?? false) !== true) {
             $descripcion = is_array($data) ? (string) ($data['description'] ?? 'Respuesta inválida') : 'Respuesta no JSON';
-            error_log("Telegram API error (HTTP {$httpCode}): {$descripcion}");
-            return false;
+            error_log("Telegram API error ({$metodo}, HTTP {$httpCode}): {$descripcion}");
+            return ['ok' => false];
         }
-        return true;
+        return $data;
+    }
+
+    /**
+     * Envía un mensaje de texto a un chat de Telegram usando la API HTTP.
+     * @param array|null $replyMarkup Markup de teclado (inline_keyboard) opcional.
+     * @return bool true si se envió correctamente
+     */
+    function enviarAlertaTelegram(string $botToken, string $chatId, string $texto, ?array $replyMarkup = null): bool {
+        $params = [
+            'chat_id' => $chatId,
+            'text'    => $texto,
+        ];
+        if ($replyMarkup !== null) {
+            $params['reply_markup'] = json_encode($replyMarkup, JSON_UNESCAPED_UNICODE);
+        }
+        return (llamarApiTelegram($botToken, 'sendMessage', $params)['ok'] ?? false) === true;
+    }
+
+    /**
+     * Secreto compartido del webhook de Telegram, derivado del token del bot
+     * (evita añadir otra env var en Render). Telegram lo envía en la cabecera
+     * X-Telegram-Bot-Api-Secret-Token en cada update del webhook.
+     */
+    function obtenerSecretWebhookTelegram(string $botToken): string {
+        return substr(hash('sha256', $botToken . '|servifarmacia-webhook'), 0, 48);
     }
 
     /**
@@ -288,9 +310,11 @@ if (!function_exists('enviarAlertaTelegram')) {
      * @param string $metodoPago   Método de pago (cash, etc.)
      * @param array  $infoEntrega  Datos de entrega (name, phone, address)
      * @param array  $items        [{nombre, categoria, cantidad, total}]
+     * @param int    $pedidoId     ID interno del pedido; si es > 0 añade botones
+     *                             de confirmar entrega / cancelar para el repartidor.
      * @return bool true si se envió correctamente
      */
-    function notificarNuevoPedidoTelegram(string $numeroPedido, float $total, string $metodoPago, array $infoEntrega = [], array $items = []): bool {
+    function notificarNuevoPedidoTelegram(string $numeroPedido, float $total, string $metodoPago, array $infoEntrega = [], array $items = [], int $pedidoId = 0): bool {
         $config = require __DIR__ . '/config/config.php';
         $tg = $config['telegram'] ?? null;
         if (!$tg || empty($tg['bot_token'])) {
@@ -336,6 +360,14 @@ if (!function_exists('enviarAlertaTelegram')) {
         $lineas[] = "─────────────────";
         $lineas[] = "🔄 Estado: Pendiente";
 
-        return enviarAlertaTelegram($tg['bot_token'], $chatDestino, implode("\n", $lineas));
+        $markup = null;
+        if ($pedidoId > 0) {
+            $markup = ['inline_keyboard' => [[
+                ['text' => '✅ Confirmar entrega', 'callback_data' => "entregar_{$pedidoId}"],
+                ['text' => '❌ Cancelar pedido', 'callback_data' => "cancelar_{$pedidoId}"],
+            ]]];
+        }
+
+        return enviarAlertaTelegram($tg['bot_token'], $chatDestino, implode("\n", $lineas), $markup);
     }
 }

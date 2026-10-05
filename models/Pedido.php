@@ -162,7 +162,7 @@ class PedidoModelo {
             $this->db->rollback();
             return null;
         }
-        $resumen = ['total' => round($totalCalculado, 2), 'items' => $itemsNotificacion, 'stock_transiciones' => $transicionesStock];
+        $resumen = ['pedido_id' => (int) $pedidoId, 'total' => round($totalCalculado, 2), 'items' => $itemsNotificacion, 'stock_transiciones' => $transicionesStock];
         return $numeroPedido;
     }
 

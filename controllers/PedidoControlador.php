@@ -103,7 +103,8 @@ class PedidoControlador extends Controlador {
                 (float) ($resumenPedido['total'] ?? 0),
                 (string) ($data['paymentMethod'] ?? $data['metodo_pago'] ?? 'cash'),
                 $data['deliveryInfo'],
-                $resumenPedido['items'] ?? []
+                $resumenPedido['items'] ?? [],
+                (int) ($resumenPedido['pedido_id'] ?? 0)
             );
             // Si la compra dejó algún producto en stock bajo, alerta aparte.
             notificarStockBajoTrasPedido($resumenPedido['stock_transiciones'] ?? []);

@@ -55,7 +55,9 @@ class CarritoModelo {
 
         if ($row) {
             $newQty = ((int) $row['cantidad']) + $cantidad;
-            $this->db->query("UPDATE carrito_compras SET cantidad = {$newQty}, actualizado_en = NOW() WHERE id = " . (int) $row['id']);
+            // Refrescar el precio: si cambió (ej. descuento nuevo) el item ya
+            // guardado no debe conservar el precio viejo.
+            $this->db->query("UPDATE carrito_compras SET cantidad = {$newQty}, precio = {$precio}, actualizado_en = NOW() WHERE id = " . (int) $row['id']);
         } else {
             $userIdVal = $userId ?: 'NULL';
             $sessionIdVal = $sesionId ? "'{$sesionId}'" : 'NULL';

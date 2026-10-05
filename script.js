@@ -588,7 +588,12 @@ async function appInit() {
       return
     }
     const tipoVenta = options.tipoVenta || 'unidad'
-    const unitPrice = options.price != null ? Number(options.price) : product.price
+    // El carrito debe guardar el precio final con descuento (el backend del
+    // pedido lo recalcula igual; si aquí va el precio base, el total del
+    // carrito no coincide con lo que se cobra).
+    const rawPrice = options.price != null ? Number(options.price) : Number(product.price ?? 0)
+    const discountPct = Math.max(0, Math.min(100, Number(product.descuento_porcentaje ?? 0)))
+    const unitPrice = discountPct > 0 ? Math.round(rawPrice * (1 - discountPct / 100) * 100) / 100 : rawPrice
     const stock = Number(product.stock) || 0
     // Cantidad ya presente en el carrito para este producto
     const existing = (cart || []).find((c) => Number(c.product_id) === Number(productId))
@@ -708,16 +713,18 @@ async function appInit() {
 
     if (product.is_fractionable && product.units_per_box > 0) {
       if (fractionSelector) fractionSelector.classList.remove('d-none')
+      const discountPct = Math.max(0, Math.min(100, Number(product.descuento_porcentaje ?? 0)))
+      const conDescuento = (v) => { const n = Number(v) || 0; return discountPct > 0 ? Math.round(n * (1 - discountPct / 100) * 100) / 100 : n }
       // Preparar labels con precios
-      if (presBoxLabel) presBoxLabel.textContent = `Caja completa (${product.units_per_box} u.) - ${formatCurrency(product.box_price || 0)}`
+      if (presBoxLabel) presBoxLabel.textContent = `Caja completa (${product.units_per_box} u.) - ${formatCurrency(conDescuento(product.box_price || 0))}`
       if (presUnit) presUnit.textContent // noop
       // Marcar "caja" por defecto
       if (presBox) presBox.checked = true
       if (presUnit) presUnit.checked = false
       if (addBtn) addBtn.dataset.presentation = 'caja'
       // Mostrar precio de caja inicialmente
-      document.getElementById('productDetailPrice').textContent = formatCurrency(product.box_price || product.price)
-      if (fractionHint) fractionHint.textContent = `Caja: ${formatCurrency(product.box_price || 0)} | Tableta suelta: ${formatCurrency(product.unit_price || 0)}`
+      document.getElementById('productDetailPrice').textContent = formatCurrency(conDescuento(product.box_price || product.price))
+      if (fractionHint) fractionHint.textContent = `Caja: ${formatCurrency(conDescuento(product.box_price || 0))} | Tableta suelta: ${formatCurrency(conDescuento(product.unit_price || 0))}`
       // Calcular stock disponible en cajas
       const cajasDisp = Math.floor((product.stock_total_units || 0) / product.units_per_box)
       document.getElementById('productDetailStock').textContent = `${cajasDisp} cajas (${product.stock_total_units || 0} uds.)`
@@ -725,7 +732,7 @@ async function appInit() {
       const recalc = () => {
         const pres = presBox && presBox.checked ? 'caja' : 'unidad'
         if (addBtn) addBtn.dataset.presentation = pres
-        const precio = pres === 'caja' ? (product.box_price || product.price) : (product.unit_price || product.price)
+        const precio = conDescuento(pres === 'caja' ? (product.box_price || product.price) : (product.unit_price || product.price))
         document.getElementById('productDetailPrice').textContent = formatCurrency(precio)
         if (pres === 'caja') {
           const cDisp = Math.floor((product.stock_total_units || 0) / product.units_per_box)

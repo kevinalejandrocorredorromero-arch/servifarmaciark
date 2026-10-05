@@ -800,30 +800,27 @@ section.py-5,
 .categories-swiper { padding: 0 0.25rem; overflow: hidden; }
 .categories-swiper .swiper-slide { height: auto; }
 
-/* Swiper pone position:relative en el carrusel, asi que las flechas se miden
-   desde el borde del SWIPER. Y su overflow-x:hidden las RECORTA aunque se use
-   left negativo. Las de brands sufrian el mismo defecto (a 10px, encima de la
-   primera tarjeta). Se liberan con overflow:visible y se alinean al borde de
-   la seccion; Swiper ya las oculta cuando solo hay una pagina. */
-.categories-section,
-.brands-section { position: relative; }
-
+/* Las flechas se posicionan desde el carrusel (Swiper le pone position:relative
+   y overflow:hidden): cualquier left/right negativo las recorta contra el borde
+   del swiper. Van DENTRO (10px del borde). El centrado vertical es por
+   margin-top, no por transform: el hover de .swiper-button-* usa scale(1.06)
+   y pisaria un translateY(-50%), bajando la flecha ~21px justo al hacer click. */
 .categories-section .swiper-button-next,
 .categories-section .swiper-button-prev,
 .brands-section .swiper-button-next,
 .brands-section .swiper-button-prev {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  margin-top: -21px;
   overflow: visible;
   z-index: 5;
 }
 
 .categories-section .swiper-button-prev,
-.brands-section .swiper-button-prev { left: -26px; }
+.brands-section .swiper-button-prev { left: 10px; }
 
 .categories-section .swiper-button-next,
-.brands-section .swiper-button-next { right: -26px; }
+.brands-section .swiper-button-next { right: 10px; }
 
 @media (max-width: 767.98px) {
   .categories-section .swiper-button-next,
@@ -2216,6 +2213,11 @@ footer small { color: var(--ink-500); font-size: 0.8rem; }
   .category-card { min-height: 132px; }
   .swiper-button-next,
   .swiper-button-prev { width: 40px; height: 40px; }
+  /* esas mismas flechas miden 40px en tactil: se recentran a su mitad */
+  .categories-section .swiper-button-next,
+  .categories-section .swiper-button-prev,
+  .brands-section .swiper-button-next,
+  .brands-section .swiper-button-prev { margin-top: -20px; }
 }
 
 /* =========================================================================

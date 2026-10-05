@@ -170,8 +170,55 @@ class PedidoModelo {
         $condicion = $esAdmin
             ? "id = " . (int) $id
             : "id = " . (int) $id . " AND usuario_id = " . (int) $usuarioId;
+        if (!$this->db->beginTransaction()) return false;
         $res = $this->db->query("UPDATE pedidos SET estado = 'cancelado' WHERE {$condicion} AND estado = 'pendiente'");
-        return $res && mysqli_affected_rows($this->db->getConnection()) > 0;
+        if (!$res || mysqli_affected_rows($this->db->getConnection()) === 0) {
+            $this->db->rollback();
+            return false;
+        }
+        if (!$this->devolverStockDePedido((int) $id)) {
+            $this->db->rollback();
+            return false;
+        }
+        return $this->db->commit();
+    }
+
+    /**
+     * Devuelve a los productos el stock descontado al crear el pedido.
+     * Espejo inverso del descuento en crear(): suma unidades_descontadas a
+     * stock_total_unidades y recalcula stock (cajas completas si es fraccionable).
+     */
+    private function devolverStockDePedido(int $pedidoId): bool {
+        $detalles = $this->db->query(
+            "SELECT producto_id, cantidad, tipo_venta, unidades_descontadas
+             FROM detalles_pedido WHERE pedido_id = {$pedidoId}"
+        );
+        if (!$detalles) return false;
+        while ($d = mysqli_fetch_assoc($detalles)) {
+            $productoId = (int) $d['producto_id'];
+            $cantidad = (int) $d['cantidad'];
+            $resProd = $this->db->query(
+                "SELECT es_fraccionable, unidades_por_caja, stock, stock_total_unidades
+                 FROM productos WHERE id = {$productoId} FOR UPDATE"
+            );
+            $p = $resProd ? mysqli_fetch_assoc($resProd) : null;
+            // Si el producto ya no existe no hay nada que devolver.
+            if (!$p) continue;
+            $unidadesPorCaja = max(1, (int) $p['unidades_por_caja']);
+            $unidades = (int) ($d['unidades_descontadas'] ?? 0);
+            if ($unidades <= 0) {
+                // Respaldo para líneas antiguas sin unidades_descontadas.
+                $unidades = ($d['tipo_venta'] === 'caja') ? $cantidad * $unidadesPorCaja : $cantidad;
+            }
+            $nuevoStockTotal = (int) $p['stock_total_unidades'] + $unidades;
+            $nuevoStock = ((int) $p['es_fraccionable'] === 1 && $unidadesPorCaja > 0)
+                ? intdiv($nuevoStockTotal, $unidadesPorCaja)
+                : (int) $p['stock'] + $cantidad;
+            if (!$this->db->query("UPDATE productos SET stock_total_unidades = {$nuevoStockTotal}, stock = {$nuevoStock} WHERE id = {$productoId}")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public function confirmarEntrega(int $id): bool {

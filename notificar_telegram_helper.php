@@ -66,6 +66,18 @@ if (!function_exists('enviarAlertaTelegram')) {
     }
 
     /**
+     * Marcador corto del entorno (local vs producción), derivado del host y
+     * nombre de la base de datos. Se incrusta en el callback_data de los
+     * botones para que el webhook IGNORE los clics de mensajes generados por
+     * el otro entorno (comparten bot y chat de Telegram, pero los IDs de
+     * pedido son de bases de datos distintas).
+     */
+    function obtenerMarcadorEntornoTelegram(array $config): string {
+        $clave = ($config['db']['host'] ?? '') . '|' . ($config['db']['name'] ?? '');
+        return substr(hash('sha256', $clave . '|servifarmacia-entorno'), 0, 8);
+    }
+
+    /**
      * Chat destino de los PEDIDOS: el grupo si está configurado; si no, el
      * chat privado. Cadena vacía si no hay ninguno. Las alertas de inventario
      * NO usan esto: van siempre al chat privado.
@@ -362,9 +374,10 @@ if (!function_exists('enviarAlertaTelegram')) {
 
         $markup = null;
         if ($pedidoId > 0) {
+            $marcador = obtenerMarcadorEntornoTelegram($config);
             $markup = ['inline_keyboard' => [[
-                ['text' => '✅ Confirmar entrega', 'callback_data' => "entregar_{$pedidoId}"],
-                ['text' => '❌ Cancelar pedido', 'callback_data' => "cancelar_{$pedidoId}"],
+                ['text' => '✅ Confirmar entrega', 'callback_data' => "entregar_{$pedidoId}_{$marcador}"],
+                ['text' => '❌ Cancelar pedido', 'callback_data' => "cancelar_{$pedidoId}_{$marcador}"],
             ]]];
         }
 

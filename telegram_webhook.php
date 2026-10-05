@@ -70,13 +70,28 @@ $responder = function (string $texto, bool $alerta = false) use ($token, $callba
     }
 };
 
-if (!preg_match('/^(entregar|cancelar)_(\d+)$/', $data, $coincidencias)) {
+if (!preg_match('/^(entregar|cancelar)_(\d+)(?:_([a-f0-9]{8}))?$/', $data, $coincidencias)) {
     $responder('Acción no reconocida', true);
     echo json_encode(['ok' => true]);
     exit;
 }
 $accion = $coincidencias[1];
 $pedidoId = (int) $coincidencias[2];
+$marcadorRecibido = $coincidencias[3] ?? '';
+
+// Local y producción comparten bot y chat de Telegram, pero los IDs de pedido
+// son de bases de datos distintas: solo se procesan botones del propio entorno.
+$marcadorPropio = obtenerMarcadorEntornoTelegram($config);
+if ($marcadorRecibido === '') {
+    $responder('Este botón es de una versión anterior y ya no se procesa. Cambie el estado del pedido desde la página web.', true);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+if (!hash_equals($marcadorPropio, $marcadorRecibido)) {
+    $responder('Este botón pertenece a otro entorno (local/producción) y no se procesa aquí.', true);
+    echo json_encode(['ok' => true]);
+    exit;
+}
 
 require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/models/Pedido.php';

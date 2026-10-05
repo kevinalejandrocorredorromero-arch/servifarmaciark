@@ -51,9 +51,11 @@ class ProductoModelo {
         $precioCaja = isset($data['box_price']) || isset($data['boxPrice'])
             ? (float) ($data['box_price'] ?? $data['precio_caja'] ?? $data['boxPrice'] ?? 0)
             : null;
+        if ($precioCaja !== null && $precioCaja <= 0) $precioCaja = null;
         $precioUnidad = isset($data['unit_price']) || isset($data['unitPrice'])
             ? (float) ($data['unit_price'] ?? $data['precio_unidad'] ?? $data['unitPrice'] ?? 0)
             : null;
+        if ($precioUnidad !== null && $precioUnidad <= 0) $precioUnidad = null;
         // Inventario unificado en la unidad mínima (tableta para fraccionables, unidad normal para el resto)
         $stockTotalUnidades = (int) ($data['stock_total_units'] ?? $data['stock_total_unidades'] ?? $data['stockTotalUnits'] ?? $stock);
         $descuento = max(0, min(100, (float) ($data['descuento_porcentaje'] ?? $data['discountPercent'] ?? 0)));
@@ -111,6 +113,12 @@ class ProductoModelo {
                 $numero = (float) $val;
                 if ($col === 'descuento_porcentaje') $numero = max(0, min(100, $numero));
                 if ($col === 'precio_anterior' && $numero < 0) $numero = 0;
+                // Un precio de presentación en 0 equivale a "sin precio definido": se guarda NULL
+                // para que el cálculo de pedidos no lo confunda con un precio real.
+                if (($col === 'precio_caja' || $col === 'precio_unidad') && $numero <= 0) {
+                    $sets[] = "`{$col}` = NULL";
+                    continue;
+                }
                 $sets[] = "`{$col}` = " . $numero;
             } elseif ($tipo === 'fecha_ingreso' || $tipo === 'fecha_vencimiento') {
                 // Las fechas deben ir como string entre comillas, no como (float)

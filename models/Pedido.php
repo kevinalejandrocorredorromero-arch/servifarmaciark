@@ -97,10 +97,14 @@ class PedidoModelo {
             }
             $descuento = max(0, min(100, (float) ($rowProd['descuento_porcentaje'] ?? 0)));
             $precioBase = (float) $rowProd['precio'];
-            if ($tipoVenta === 'caja' && $rowProd['precio_caja'] !== null) {
-                $precioBase = (float) $rowProd['precio_caja'];
-            } elseif ($tipoVenta === 'unidad' && $rowProd['precio_unidad'] !== null) {
-                $precioBase = (float) $rowProd['precio_unidad'];
+            // Los precios por presentación solo aplican si están definidos (> 0):
+            // un 0 guardado por error no debe reemplazar al precio base.
+            $precioCaja = $rowProd['precio_caja'] !== null ? (float) $rowProd['precio_caja'] : 0.0;
+            $precioUnidad = $rowProd['precio_unidad'] !== null ? (float) $rowProd['precio_unidad'] : 0.0;
+            if ($tipoVenta === 'caja' && $precioCaja > 0) {
+                $precioBase = $precioCaja;
+            } elseif ($tipoVenta === 'unidad' && $esFraccionable && $precioUnidad > 0) {
+                $precioBase = $precioUnidad;
             }
             $precio = round($precioBase * (1 - $descuento / 100), 2);
             $unidadesADescontar = ($tipoVenta === 'caja') ? $cantidad * $unidadesPorCaja : $cantidad;

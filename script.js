@@ -2667,8 +2667,8 @@ async function appInit() {
     const batchQuantity = Number.parseInt(document.getElementById('productBatchQuantity').value) || 0
     const isFractionable = document.getElementById('productFractionable')?.checked || false
     const unitsPerBox = isFractionable ? (Number.parseInt(document.getElementById('productUnitsPerBox').value) || 0) : 0
-    const boxPrice = isFractionable ? (Number.parseFloat(document.getElementById('productBoxPrice').value) || 0) : 0
-    const unitPrice = isFractionable ? (Number.parseFloat(document.getElementById('productUnitPrice').value) || 0) : 0
+    const boxPrice = isFractionable ? (Number.parseFloat(document.getElementById('productBoxPrice').value) || 0) : null
+    const unitPrice = isFractionable ? (Number.parseFloat(document.getElementById('productUnitPrice').value) || 0) : null
     const editingId = productManagementForm?.dataset?.editingId
     const productData = {
       name,

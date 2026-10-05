@@ -63,8 +63,8 @@ SET dp.precio = ROUND(
         END * (1 - pr.descuento_porcentaje / 100), 2) * dp.cantidad
 WHERE dp.precio = 0;
 
--- Verificación posterior: debe devolver 0 filas en las tres consultas.
--- SELECT COUNT(*) AS productos_con_cero FROM productos WHERE precio_caja = 0 OR precio_unidad = 0;
--- SELECT COUNT(*) AS lineas_en_cero FROM detalles_pedido WHERE precio = 0;
--- SELECT COUNT(*) AS pedidos_des_cuadrados FROM pedidos p
---   WHERE ABS(p.total - (SELECT COALESCE(SUM(dp.total), 0) FROM detalles_pedido dp WHERE dp.pedido_id = p.id)) > 0.01;
+-- Verificación posterior: los tres conteos deben dar 0 (se imprimen al ejecutar).
+SELECT COUNT(*) AS productos_con_cero FROM productos WHERE precio_caja = 0 OR precio_unidad = 0;
+SELECT COUNT(*) AS lineas_en_cero FROM detalles_pedido WHERE precio = 0;
+SELECT COUNT(*) AS pedidos_des_cuadrados FROM pedidos p
+  WHERE ABS(p.total - (SELECT COALESCE(SUM(dp.total), 0) FROM detalles_pedido dp WHERE dp.pedido_id = p.id)) > 0.01;

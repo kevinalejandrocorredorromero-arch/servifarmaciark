@@ -3208,14 +3208,9 @@ function initFooterLinks() {
   bind('footerTechSupport', openChat)
   bind('footerServiceStatus', openChat)
 
-  // Preguntas Frecuentes -> modal FAQ
+  // Preguntas Frecuentes -> abre pagina estatica
   bind('footerFaq', () => {
-    const modalEl = document.getElementById('faqModal')
-    if (modalEl) {
-      let m = bootstrap.Modal.getInstance(modalEl)
-      if (!m) m = new bootstrap.Modal(modalEl)
-      m.show()
-    }
+    window.location.href = 'faq.php'
   })
 
   // ===== Integración WhatsApp =====

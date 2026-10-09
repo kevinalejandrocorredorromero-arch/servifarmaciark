@@ -193,72 +193,36 @@
 </div>
 
 <div class="modal fade" id="tycModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5>T&eacute;rminos y Condiciones</h5>
+        <h5>Términos y Condiciones</h5>
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <h6>1. Aceptaci&oacute;n de los T&eacute;rminos</h6>
-        <p>Al acceder y utilizar este sitio web, aceptas cumplir con estos t&eacute;rminos y condiciones. Si no est&aacute;s de acuerdo, no uses este sitio.</p>
-
-        <h6>2. Uso del Servicio</h6>
-        <p>Este sitio ofrece informaci&oacute;n sobre productos farmac&eacute;uticos y de cuidado personal. La informaci&oacute;n proporcionada no sustituye el consejo m&eacute;dico profesional.</p>
-
-        <h6>3. Responsabilidad</h6>
-        <p>SERVIFARMACIA RK no se hace responsable por el uso indebido de los productos adquiridos. Consulte siempre a un profesional de la salud antes de usar cualquier medicamento.</p>
-
-        <h6>4. Precios y Disponibilidad</h6>
-        <p>Los precios y la disponibilidad de los productos est&aacute;n sujetos a cambios sin previo aviso. Nos reservamos el derecho de modificar o descontinuar productos en cualquier momento.</p>
-
-        <h6>5. Privacidad</h6>
-        <p>Tus datos personales ser&aacute;n tratados conforme a nuestra Pol&iacute;tica de Privacidad. No compartiremos tu informaci&oacute;n con terceros sin tu consentimiento.</p>
-
-        <h6>6. Propiedad Intelectual</h6>
-        <p>Todo el contenido del sitio (textos, im&aacute;genes, logotipos) es propiedad de SERVIFARMACIA RK y est&aacute; protegido por derechos de autor.</p>
-
-        <h6>7. Legislaci&oacute;n Aplicable</h6>
-        <p>Estos t&eacute;rminos se rigen por las leyes de la Rep&uacute;blica de Colombia. Cualquier disputa ser&aacute; resuelta en los tribunales de Bogot&aacute;.</p>
+      <div class="modal-body text-center py-4">
+        <p class="mb-3">La versión completa de los Términos y Condiciones está disponible en una página dedicada.</p>
+        <a href="terminos.php" class="btn btn-primary"><i class="fa-solid fa-external-link-alt me-2"></i>Ver Términos y Condiciones</a>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>
 </div>
 
 <div class="modal fade" id="privacyModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5>Pol&iacute;tica de Privacidad</h5>
+        <h5>Política de Privacidad</h5>
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <h6>1. Informaci&oacute;n que Recopilamos</h6>
-        <p>Recopilamos informaci&oacute;n personal como nombre, direcci&oacute;n de correo electr&oacute;nico, n&uacute;mero de tel&eacute;fono y direcci&oacute;n de env&iacute;o cuando realizas un pedido o te registras en nuestro sitio.</p>
-
-        <h6>2. Uso de la Informaci&oacute;n</h6>
-        <p>Utilizamos tu informaci&oacute;n para procesar pedidos, mejorar nuestros servicios, enviar comunicaciones relacionadas con tu compra y cumplir con requisitos legales.</p>
-
-        <h6>3. Protecci&oacute;n de Datos</h6>
-        <p>Implementamos medidas de seguridad t&eacute;cnicas y organizativas para proteger tus datos personales contra acceso no autorizado, p&eacute;rdida o alteraci&oacute;n.</p>
-
-        <h6>4. Compartir Informaci&oacute;n</h6>
-        <p>No vendemos ni compartimos tu informaci&oacute;n personal con terceros para fines de marketing. Podemos compartir datos con procesadores de pago y servicios de env&iacute;o necesarios para completar tu pedido.</p>
-
-        <h6>5. Tus Derechos</h6>
-        <p>Tienes derecho a acceder, corregir o eliminar tus datos personales en cualquier momento. Para ejercer estos derechos, cont&aacute;ctanos a trav&eacute;s de nuestro correo electr&oacute;nico.</p>
-
-        <h6>6. Cookies</h6>
-        <p>Utilizamos cookies para mejorar tu experiencia de navegaci&oacute;n. Puedes configurar tu navegador para rechazar cookies, aunque esto puede afectar la funcionalidad del sitio.</p>
-
-        <h6>7. Contacto</h6>
-        <p>Si tienes preguntas sobre nuestra pol&iacute;tica de privacidad, cont&aacute;ctanos al correo info@servifarmaciark.com o al tel&eacute;fono 3115631854.</p>
+      <div class="modal-body text-center py-4">
+        <p class="mb-3">La versión completa de la Política de Privacidad está disponible en una página dedicada.</p>
+        <a href="privacidad.php" class="btn btn-primary"><i class="fa-solid fa-external-link-alt me-2"></i>Ver Política de Privacidad</a>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
     </div>
   </div>

@@ -138,22 +138,21 @@
 
   <div class="section">
     <h2>7. Derechos de los Usuarios</h2>
-    <p>Conforme al <strong>Reglamento de Protección de Datos Personales de Colombia</strong> (Decreto 1074 de 2015) y otras normativas aplicables, usted tiene los siguientes derechos:</p>
+    <p>Conforme a la <strong>Ley 1581 de 2012</strong> (régimen general de protección de datos personales de Colombia), su <strong>Decreto Reglamentario 1377 de 2013</strong> —compilado en el Decreto 1074 de 2015— y demás normas aplicables, usted tiene los siguientes derechos (art. 8, Ley 1581):</p>
     <ul>
-      <li><strong>Derecho de acceso:</strong> conocer qué datos personales tenemos recopilado sobre usted.</li>
-      <li><strong>Derecho de rectificación:</strong> corregir datos personales inexactos o incompletos.</li>
-      <li><strong>Derecho de eliminación ("olvido"):</strong> solicitar la eliminación de sus datos personales cuando ya no sean necesarios para los fines para los cuales se recopilaron.</li>
-      <li><strong>Derecho de oposición:</strong> oponerse al procesamiento de sus datos para ciertos propósitos, como el marketing directo.</li>
-      <li><strong>Derecho de portabilidad:</strong> recibir sus datos en un formato estructurado, de uso común y procesable por máquinas, y poder transmitirlos a otro responsable sin que esto perjudique.</li>
-      <li><strong>Derecho de revocación:</strong> revocar el consentimiento otorgado para el tratamiento de datos en cualquier momento.</li>
-      <li><strong>Derecho de no discriminación:</strong> no recibir un trato desigual por el ejercicio de sus derechos.</li>
+      <li><strong>Conocer, actualizar y rectificar</strong> sus datos personales frente a SERVIFARMACIA RK como responsable del tratamiento.</li>
+      <li><strong>Solicitar prueba de la autorización</strong> otorgada para el tratamiento de sus datos personales.</li>
+      <li><strong>Ser informado</strong> sobre el uso que se ha dado a sus datos personales.</li>
+      <li><strong>Presentar quejas ante la Superintendencia de Industria y Comercio (SIC)</strong> por infracciones a la Ley 1581 de 2012, previo trámite de su solicitud ante nosotros.</li>
+      <li><strong>Revocar la autorización y/o solicitar la supresión</strong> del dato cuando en el tratamiento no se respeten los principios, derechos y garantías constitucionales y legales.</li>
+      <li><strong>Acceder de forma gratuita</strong> a sus datos personales objeto de tratamiento.</li>
     </ul>
     <p>Para ejercer cualquiera de estos derechos, puede contactarnos enviando un correo a <a href="mailto:info@servifarmaciark.com">info@servifarmaciark.com</a> o escribirnos a Carrera 67 #61-24, Bogotá, Colombia. Respondemos a sus solicitudes en un plazo máximo de 15 días hábiles.</p>
   </div>
 
   <div class="section">
     <h2>8. Seguridad de los Datos Personales</h2>
-    <p>SERVIFARMACIA RK aplica medidas de seguridad técnicas, administrativas y organizativas aprobadas por la autoridad de protección de datos, incluyendo:</p>
+    <p>SERVIFARMACIA RK aplica medidas de seguridad técnicas, administrativas y organizativas acordes con la Ley 1581 de 2012 y bajo la vigilancia de la Superintendencia de Industria y Comercio (SIC), incluyendo:</p>
     <ul>
       <li>Encriptación de datos en tránsito (HTTPS/TLS) y en reposo.</li>
       <li>Control de acceso restringido a personal autorizado.</li>

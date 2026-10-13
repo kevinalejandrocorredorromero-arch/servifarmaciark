@@ -3319,3 +3319,36 @@ if (document.readyState === 'loading') {
 } else {
   appInit()
 }
+
+// Banner de consentimiento de cookies. Independiente del IIFE principal: usa
+// localStorage (no las cookies helpers) para no depender del scope del módulo.
+function initCookieConsent() {
+  const banner = document.getElementById('cookieBanner')
+  if (!banner) return
+  const STORAGE_KEY = 'rk_cookie_consent'
+  let previa = null
+  try { previa = localStorage.getItem(STORAGE_KEY) } catch (e) { previa = null }
+  if (previa === 'aceptadas' || previa === 'rechazadas') return
+
+  const guardar = (decision) => {
+    try { localStorage.setItem(STORAGE_KEY, decision) } catch (e) { /* modo privado: no persiste */ }
+    banner.classList.add('cookie-banner--hide')
+    banner.addEventListener('transitionend', () => { banner.hidden = true }, { once: true })
+    // Respaldo si no hay transición (p. ej. prefers-reduced-motion bloquea el evento).
+    setTimeout(() => { banner.hidden = true }, 400)
+  }
+
+  banner.hidden = false
+  // Forzar un reflow antes de añadir la clase para que la transición de entrada
+  // se active de forma fiable (requestAnimationFrame no corre en pestañas ocultas).
+  void banner.offsetHeight
+  banner.classList.add('cookie-banner--show')
+  document.getElementById('cookieAccept')?.addEventListener('click', () => guardar('aceptadas'))
+  document.getElementById('cookieReject')?.addEventListener('click', () => guardar('rechazadas'))
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCookieConsent)
+} else {
+  initCookieConsent()
+}

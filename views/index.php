@@ -66,6 +66,8 @@ $firebasePublico = json_encode([
 
   <?php require __DIR__ . '/partials/widget-chat.php'; ?>
 
+  <?php require __DIR__ . '/partials/cookies-banner.php'; ?>
+
   <input type="hidden" id="requireTest" value="OK">
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

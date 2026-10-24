@@ -39,7 +39,7 @@ Auth::iniciarSesion();
 $accion = $_REQUEST['accion'] ?? ($_REQUEST['action'] ?? '');
 $respuesta = ['success' => false];
 
-// Permisos por acción: 'publica' | 'sesion' | 'admin'
+// Permisos por acción: 'publica' | 'sesion' | 'vendedor' (vendedor o admin) | 'admin'
 $permisosAccion = [
     // Públicas (catálogo, carrito propio por sesión, login/registro)
     'getProducts'            => 'publica',
@@ -77,12 +77,12 @@ $permisosAccion = [
     'obtenerPedidos'         => 'sesion',
     'cancelOrder'            => 'sesion',
     'cancelarPedido'         => 'sesion',
-    'updateCartItem'         => 'sesion',
-    'actualizarItemCarrito'  => 'sesion',
-    'removeFromCart'         => 'sesion',
-    'eliminarCarrito'        => 'sesion',
-    'clearCart'              => 'sesion',
-    'vaciarCarrito'          => 'sesion',
+    'updateCartItem'         => 'publica',
+    'actualizarItemCarrito'  => 'publica',
+    'removeFromCart'         => 'publica',
+    'eliminarCarrito'        => 'publica',
+    'clearCart'              => 'publica',
+    'vaciarCarrito'          => 'publica',
     'updateProfile'          => 'sesion',
     'actualizarPerfil'       => 'sesion',
     // Requieren rol admin
@@ -100,10 +100,12 @@ $permisosAccion = [
     'actualizarProducto'     => 'admin',
     'deleteProduct'          => 'admin',
     'eliminarProducto'       => 'admin',
-    'updateProductStock'     => 'admin',
-    'actualizarStockProducto' => 'admin',
-    'getInventoryAlerts'     => 'admin',
-    'obtenerAlertasInventario' => 'admin',
+    // Inventario del día a día: el vendedor ajusta stock y consulta alertas,
+    // pero el alta, edición y borrado de productos siguen siendo del admin.
+    'updateProductStock'     => 'vendedor',
+    'actualizarStockProducto' => 'vendedor',
+    'getInventoryAlerts'     => 'vendedor',
+    'obtenerAlertasInventario' => 'vendedor',
     'confirmOrderDelivery'   => 'admin',
     'confirmarEntregaPedido' => 'admin',
     'savePaymentConfig'      => 'admin',
@@ -117,6 +119,8 @@ $mapaControladores = [
     // Productos
     'obtenerProductos'     => ['ProductoControlador', 'obtenerTodos'],
     'verProducto'          => ['ProductoControlador', 'obtenerPorId'],
+    'obtenerCategorias'    => ['ProductoControlador', 'obtenerCategorias'],
+    'getCategories'        => ['ProductoControlador', 'obtenerCategorias'],
     'crearProducto'        => ['ProductoControlador', 'crear'],
     'actualizarProducto'   => ['ProductoControlador', 'actualizar'],
     'eliminarProducto'     => ['ProductoControlador', 'eliminar'],
@@ -222,6 +226,8 @@ if (isset($mapaControladores[$accion])) {
     $permiso = $permisosAccion[$accion] ?? 'sesion';
     if ($permiso === 'admin') {
         Auth::requerirAdmin();
+    } elseif ($permiso === 'vendedor') {
+        Auth::requerirVendedor();
     } elseif ($permiso === 'sesion') {
         Auth::requerirSesion();
     }

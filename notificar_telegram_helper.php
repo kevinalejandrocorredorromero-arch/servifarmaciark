@@ -90,6 +90,15 @@ if (!function_exists('enviarAlertaTelegram')) {
         return $destino;
     }
 
+    function telegramConfigurado(?array $tg): bool {
+        if (!$tg || empty($tg['bot_token'])) return false;
+        $token = trim((string) $tg['bot_token']);
+        if ($token === '' || strpos($token, 'COLOCA_AQUI') !== false) return false;
+        $chatId = trim((string) ($tg['chat_id'] ?? ''));
+        if ($chatId === '' || strpos($chatId, 'COLOCA_AQUI') !== false) return false;
+        return true;
+    }
+
     /**
      * Arma y envía la alerta de UN producto si está en stock bajo o por vencer.
      * Devuelve true si envió el mensaje.
@@ -97,13 +106,10 @@ if (!function_exists('enviarAlertaTelegram')) {
     function notificarProductoSiAlerta(int $productoId): bool {
         $config = require __DIR__ . '/config/config.php';
         $tg = $config['telegram'] ?? null;
-        if (!$tg || empty($tg['bot_token'])) {
+        if (!telegramConfigurado($tg)) {
             return false;
         }
         $destino = trim((string) ($tg['chat_id'] ?? ''));
-        if ($destino === '') {
-            return false;
-        }
         $umbral = (int) ($tg['umbral_bajo_stock'] ?? ($config['whatsapp']['umbral_bajo_stock'] ?? 10));
         $dias   = (int) ($config['whatsapp']['dias_anticipacion_vencimiento'] ?? ($tg['dias_anticipacion_vencimiento'] ?? 30));
 
@@ -165,7 +171,7 @@ if (!function_exists('enviarAlertaTelegram')) {
         }
         $config = require __DIR__ . '/config/config.php';
         $tg = $config['telegram'] ?? null;
-        if (!$tg || empty($tg['bot_token'])) {
+        if (!telegramConfigurado($tg)) {
             return [];
         }
         $umbral = (int) ($tg['umbral_bajo_stock'] ?? ($config['whatsapp']['umbral_bajo_stock'] ?? 10));
@@ -194,13 +200,10 @@ if (!function_exists('enviarAlertaTelegram')) {
     function notificarResumenAlertasTelegram(bool $forzar = false): array {
         $config = require __DIR__ . '/config/config.php';
         $tg = $config['telegram'] ?? null;
-        if (!$tg || empty($tg['bot_token'])) {
+        if (!telegramConfigurado($tg)) {
             return ['enviado' => false, 'motivo' => 'sin_config', 'stock_bajo' => 0, 'por_vencer' => 0, 'mensaje' => ''];
         }
         $destino = trim((string) ($tg['chat_id'] ?? ''));
-        if ($destino === '') {
-            return ['enviado' => false, 'motivo' => 'sin_destino', 'stock_bajo' => 0, 'por_vencer' => 0, 'mensaje' => ''];
-        }
         $umbral = (int) ($tg['umbral_bajo_stock'] ?? ($config['whatsapp']['umbral_bajo_stock'] ?? 10));
         $dias   = (int) ($config['whatsapp']['dias_anticipacion_vencimiento'] ?? ($tg['dias_anticipacion_vencimiento'] ?? 30));
 
@@ -324,18 +327,21 @@ if (!function_exists('enviarAlertaTelegram')) {
      * @param array  $items        [{nombre, categoria, cantidad, total}]
      * @param int    $pedidoId     ID interno del pedido; si es > 0 añade botones
      *                             de confirmar entrega / cancelar para el repartidor.
+     * @param string $estado       Estado con el que nace el pedido. Las ventas en
+     *                             tienda ya salen 'entregado', así que no se ofrecen
+     *                             botones que el sistema rechazaría.
      * @return bool true si se envió correctamente
      */
-    function notificarNuevoPedidoTelegram(string $numeroPedido, float $total, string $metodoPago, array $infoEntrega = [], array $items = [], int $pedidoId = 0): bool {
+    function notificarNuevoPedidoTelegram(string $numeroPedido, float $total, string $metodoPago, array $infoEntrega = [], array $items = [], int $pedidoId = 0, string $estado = 'pendiente'): bool {
         $config = require __DIR__ . '/config/config.php';
         $tg = $config['telegram'] ?? null;
-        if (!$tg || empty($tg['bot_token'])) {
+        if (!telegramConfigurado($tg)) {
             return false;
         }
 
         // Los pedidos van al grupo si está configurado; si no, al chat privado.
         $chatDestino = obtenerChatDestinoPedidosTelegram($tg);
-        if ($chatDestino === '') {
+        if ($chatDestino === '' || strpos($chatDestino, 'COLOCA_AQUI') !== false) {
             return false;
         }
 
@@ -370,10 +376,11 @@ if (!function_exists('enviarAlertaTelegram')) {
         }
 
         $lineas[] = "─────────────────";
-        $lineas[] = "🔄 Estado: Pendiente";
+        $pendiente = $estado === 'pendiente';
+        $lineas[] = $pendiente ? "🔄 Estado: Pendiente" : "✅ Estado: Entregado (venta en tienda)";
 
         $markup = null;
-        if ($pedidoId > 0) {
+        if ($pedidoId > 0 && $pendiente) {
             $marcador = obtenerMarcadorEntornoTelegram($config);
             $markup = ['inline_keyboard' => [[
                 ['text' => '✅ Confirmar entrega', 'callback_data' => "entregar_{$pedidoId}_{$marcador}"],

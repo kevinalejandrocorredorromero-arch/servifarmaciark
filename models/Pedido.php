@@ -7,6 +7,11 @@ class PedidoModelo {
         $this->db = Database::getInstance();
     }
 
+    private function registrarFalloCheckout(string $etapa): void {
+        $conexion = $this->db->getConnection();
+        error_log('[Checkout] ' . $etapa . ' (MySQL ' . mysqli_errno($conexion) . '): ' . $this->db->error());
+    }
+
     public function obtenerTodos(?int $usuarioId = null): array {
         $sql = "SELECT * FROM pedidos";
 
@@ -39,9 +44,9 @@ class PedidoModelo {
             $condicion .= ' AND vendedor_id = ' . (int) $usuarioId;
         } elseif ($usuarioId > 0) {
             $condicion .= ' AND usuario_id = ' . (int) $usuarioId;
-        } else {
-            return null;
         }
+        // Para un usuario no identificado (guest) no se aplica filtro de usuario,
+        // lo que permite mostrar el recibo inmediatamente tras la compra.
         $res = $this->db->query("SELECT * FROM pedidos WHERE {$condicion} LIMIT 1");
         $row = $res ? mysqli_fetch_assoc($res) : null;
         return $row ? $this->mapearFila($row) : null;
@@ -55,14 +60,32 @@ class PedidoModelo {
         $sesionId = !empty($data['session_id']) ? $this->db->escape($data['session_id']) : null;
         if (empty($items)) return null;
 
-        if (!$this->db->beginTransaction()) return null;
+        if (!$this->db->beginTransaction()) {
+            $this->registrarFalloCheckout('no se pudo iniciar la transacción');
+            return null;
+        }
         $numeroPedido = 'RK' . date('YmdHis') . mt_rand(100, 999);
         $infoEntregaJson = $this->db->escape(json_encode($infoEntrega, JSON_UNESCAPED_UNICODE));
-        $usuarioSql = $usuarioId > 0 ? ', usuario_id' : '';
-        $usuarioValor = $usuarioId > 0 ? ', ' . (int) $usuarioId : '';
-        $sql = "INSERT INTO pedidos (numero_pedido, total, metodo_pago, info_entrega{$usuarioSql}, estado, fecha_pedido)
-                VALUES ('{$numeroPedido}', 0, '{$metodoPago}', '{$infoEntregaJson}'{$usuarioValor}, 'pendiente', NOW())";
+
+        // Una venta de mostrador se atribuye al vendedor, no a un cliente: sin
+        // vendedor_id el vendedor no puede volver a verla ni abrir su recibo.
+        $enTienda = !empty($data['en_tienda']);
+        // En tienda el producto se entrega en el momento, así que el pedido nace
+        // confirmado y no pasa por la cola de pedidos pendientes.
+        $estadoInicial = $enTienda ? 'entregado' : 'pendiente';
+        $columnas = ['numero_pedido', 'total', 'metodo_pago', 'info_entrega', 'estado', 'fecha_pedido'];
+        $valores = ["'{$numeroPedido}'", '0', "'{$metodoPago}'", "'{$infoEntregaJson}'", "'{$estadoInicial}'", 'NOW()'];
+        if ($enTienda && $usuarioId > 0) {
+            $columnas[] = 'vendedor_id';
+            $valores[] = (int) $usuarioId;
+        } elseif ($usuarioId > 0) {
+            $columnas[] = 'usuario_id';
+            $valores[] = (int) $usuarioId;
+        }
+        $sql = 'INSERT INTO pedidos (' . implode(', ', $columnas) . ')
+                VALUES (' . implode(', ', $valores) . ')';
         if (!$this->db->query($sql)) {
+            $this->registrarFalloCheckout('falló INSERT de pedidos');
             $this->db->rollback();
             return null;
         }
@@ -76,6 +99,7 @@ class PedidoModelo {
             $cantidad = (int) ($item['quantity'] ?? $item['cantidad'] ?? 0);
             $tipoVenta = strtolower(trim((string) ($item['tipo_venta'] ?? $item['tipoVenta'] ?? 'unidad')));
             if ($productoId <= 0 || $cantidad <= 0 || !in_array($tipoVenta, ['caja', 'unidad'], true)) {
+                error_log('[Checkout] Línea de pedido inválida; transacción cancelada');
                 $this->db->rollback();
                 return null;
             }
@@ -84,7 +108,14 @@ class PedidoModelo {
             $resProd = $this->db->query("SELECT id, nombre, categoria, precio, precio_anterior, descuento_porcentaje, precio_caja, precio_unidad,
                     es_fraccionable, unidades_por_caja, stock_total_unidades, stock
                     FROM productos WHERE id = {$productoId} FOR UPDATE");
-            if (!$resProd || !($rowProd = mysqli_fetch_assoc($resProd))) {
+            if (!$resProd) {
+                $this->registrarFalloCheckout('falló la consulta del producto para bloquear stock');
+                $this->db->rollback();
+                return null;
+            }
+            $rowProd = mysqli_fetch_assoc($resProd);
+            if (!$rowProd) {
+                error_log('[Checkout] El producto ID ' . $productoId . ' desapareció antes de confirmar el pedido');
                 $this->db->rollback();
                 return null;
             }
@@ -112,6 +143,7 @@ class PedidoModelo {
             $stockActual = (int) $rowProd['stock'];
             $stockDisponible = ($tipoVenta === 'caja') ? intdiv($stockTotalActual, $unidadesPorCaja) : ($esFraccionable ? $stockTotalActual : $stockActual);
             if ($cantidad > $stockDisponible) {
+                error_log('[Checkout] Stock insuficiente en la validación final para producto ID ' . $productoId);
                 $this->db->rollback();
                 return null;
             }
@@ -128,6 +160,7 @@ class PedidoModelo {
             $sqlItem = "INSERT INTO detalles_pedido (pedido_id, producto_id, nombre, categoria, precio, cantidad, total, tipo_venta, unidades_descontadas)
                         VALUES ({$pedidoId}, {$productoId}, '{$nombre}', '{$categoria}', {$precio}, {$cantidad}, {$lineaTotal}, '{$tipoVenta}', {$unidadesADescontar})";
             if (!$this->db->query($sqlItem)) {
+                $this->registrarFalloCheckout('falló INSERT de detalles_pedido');
                 $this->db->rollback();
                 return null;
             }
@@ -142,12 +175,14 @@ class PedidoModelo {
                 'stock_despues' => $nuevoStockTotal,
             ];
             if (!$this->db->query("UPDATE productos SET stock_total_unidades = {$nuevoStockTotal}, stock = {$nuevoStock} WHERE id = {$productoId}")) {
+                $this->registrarFalloCheckout('falló actualización de stock para producto ID ' . $productoId);
                 $this->db->rollback();
                 return null;
             }
         }
 
         if (!$this->db->query("UPDATE pedidos SET total = {$totalCalculado} WHERE id = {$pedidoId}")) {
+            $this->registrarFalloCheckout('falló actualización del total del pedido');
             $this->db->rollback();
             return null;
         }
@@ -158,11 +193,17 @@ class PedidoModelo {
         } else {
             $okCarrito = true;
         }
-        if (!$okCarrito || !$this->db->commit()) {
+        if (!$okCarrito) {
+            $this->registrarFalloCheckout('falló la limpieza del carrito');
             $this->db->rollback();
             return null;
         }
-        $resumen = ['pedido_id' => (int) $pedidoId, 'total' => round($totalCalculado, 2), 'items' => $itemsNotificacion, 'stock_transiciones' => $transicionesStock];
+        if (!$this->db->commit()) {
+            $this->registrarFalloCheckout('falló el commit de la transacción');
+            $this->db->rollback();
+            return null;
+        }
+        $resumen = ['pedido_id' => (int) $pedidoId, 'total' => round($totalCalculado, 2), 'items' => $itemsNotificacion, 'stock_transiciones' => $transicionesStock, 'estado' => $estadoInicial];
         return $numeroPedido;
     }
 

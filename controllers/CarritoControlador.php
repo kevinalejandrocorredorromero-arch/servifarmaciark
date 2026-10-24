@@ -13,6 +13,15 @@ class CarritoControlador extends Controlador {
         return ['user_id' => null, 'session_id' => Auth::sessionIdCarrito()];
     }
 
+    public function infoSesion(): void {
+        $userId = Auth::idUsuario();
+        $this->success([
+            'authenticated' => $userId > 0,
+            'user_id' => $userId > 0 ? $userId : null,
+            'session_id' => $userId > 0 ? null : Auth::sessionIdCarrito(),
+        ]);
+    }
+
     private function rechazarPropietarioAjeno(array $data, array $owner): bool {
         $requestedUser = (int) ($data['user_id'] ?? $data['usuario_id'] ?? 0);
         $requestedSession = (string) ($data['session_id'] ?? $data['sesion_id'] ?? '');

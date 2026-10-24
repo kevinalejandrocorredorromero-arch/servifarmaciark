@@ -1391,6 +1391,15 @@ select {
   z-index: 5;
 }
 
+/* El desfase de arriba es la altura del navbar de la pagina. Dentro de un modal
+   ese navbar no existe, y heredarlo deja el encabezado flotando 72px mas abajo,
+   tapando las primeras filas (recibo, detalle de pedido, panel de administracion). */
+.modal .table thead th {
+  position: static;
+  top: auto;
+  z-index: auto;
+}
+
 .table tbody tr {
   background: #ffffff;
 }

@@ -155,6 +155,51 @@
   </div>
 </div>
 
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="receiptModalLabel"><i class="fa-solid fa-receipt me-2"></i>Recibo de Compra</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-12">
+            <p class="mb-1"><strong>N° de pedido:</strong> <span id="receiptOrderNumber" class="fs-3 fw-bold"></span></p>
+            <p class="mb-1"><strong>Fecha:</strong> <span id="receiptDate"></span></p>
+            <p class="mb-1"><strong>Método de pago:</strong> <span id="receiptPaymentMethod"></span></p>
+            <p class="mb-1"><strong>Total:</strong> <span id="receiptTotal"></span></p>
+          </div>
+        </div>
+        <div class="mb-3">
+          <p class="mb-1"><strong>Entrega a:</strong> <span id="receiptDeliveryName"></span></p>
+          <p class="mb-1">Teléfono: <span id="receiptDeliveryPhone"></span></p>
+          <p class="mb-1">Dirección: <span id="receiptDeliveryAddress"></span></p>
+        </div>
+        <h6 class="mt-4">Productos</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Producto</th>
+                <th scope="col">Cantidad</th>
+                <th scope="col">Precio Unit.</th>
+                <th scope="col">Total</th>
+              </tr>
+            </thead>
+            <tbody id="receiptItemsBody">
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-3 text-end">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print me-2"></i>Imprimir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="orderDetailModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">

@@ -20,6 +20,7 @@ class UsuarioModelo {
 
     public function obtenerPorId(int $id): ?array {
         $stmt = $this->db->prepare("SELECT id, nombre, correo, usuario, es_admin, rol, proveedor, foto_url, email_verified FROM usuarios WHERE id = ?");
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
@@ -30,6 +31,7 @@ class UsuarioModelo {
     /** Busca por el UID de Firebase. Es la forma canónica de identificar usuarios OAuth. */
     public function buscarPorFirebaseUid(string $uid): ?array {
         $stmt = $this->db->prepare("SELECT id, nombre, correo, usuario, es_admin, rol, firebase_uid, proveedor, foto_url FROM usuarios WHERE firebase_uid = ? LIMIT 1");
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 's', $uid);
         mysqli_stmt_execute($stmt);
         $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -38,6 +40,7 @@ class UsuarioModelo {
 
     public function buscarPorCorreo(string $correo): ?array {
         $stmt = $this->db->prepare("SELECT id, nombre, correo, usuario, es_admin, rol, firebase_uid, proveedor, foto_url, email_verified FROM usuarios WHERE correo = ? LIMIT 1");
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 's', $correo);
         mysqli_stmt_execute($stmt);
         $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
@@ -46,6 +49,7 @@ class UsuarioModelo {
 
     public function vincularFirebase(int $id, string $uid, string $proveedor, ?string $fotoUrl): bool {
         $stmt = $this->db->prepare("UPDATE usuarios SET firebase_uid = ?, proveedor = ?, foto_url = ?, email_verified = 1 WHERE id = ?");
+        if (!$stmt) return false;
         mysqli_stmt_bind_param($stmt, 'sssi', $uid, $proveedor, $fotoUrl, $id);
         return mysqli_stmt_execute($stmt);
     }
@@ -63,6 +67,7 @@ class UsuarioModelo {
             "INSERT INTO usuarios (nombre, correo, usuario, contrasena, es_admin, rol, creado_en, firebase_uid, proveedor, foto_url, email_verified)
              VALUES (?, ?, ?, NULL, 0, 'customer', NOW(), ?, ?, ?, 1)"
         );
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 'ssssss', $nombre, $correo, $usuario, $uid, $proveedor, $fotoUrl);
         return mysqli_stmt_execute($stmt) ? $this->db->insertId() : null;
     }
@@ -85,14 +90,15 @@ class UsuarioModelo {
 
     private function usuarioExiste(string $usuario): bool {
         $stmt = $this->db->prepare("SELECT id FROM usuarios WHERE usuario = ? LIMIT 1");
+        if (!$stmt) return false;
         mysqli_stmt_bind_param($stmt, 's', $usuario);
         mysqli_stmt_execute($stmt);
         return mysqli_num_rows(mysqli_stmt_get_result($stmt)) > 0;
     }
 
     public function buscarPorUsuarioOCorreo(string $entrada): ?array {
-        $entrada = $this->db->escape($entrada);
         $stmt = $this->db->prepare("SELECT id, nombre, correo, usuario, contrasena, es_admin, rol, proveedor, email_verified FROM usuarios WHERE usuario = ? OR correo = ? LIMIT 1");
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 'ss', $entrada, $entrada);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
@@ -168,6 +174,7 @@ class UsuarioModelo {
     /** Devuelve correo y nombre del usuario, para poder enviarle el correo de verificación. */
     public function obtenerDatosCorreo(int $id): ?array {
         $stmt = $this->db->prepare("SELECT id, nombre, correo FROM usuarios WHERE id = ? LIMIT 1");
+        if (!$stmt) return null;
         mysqli_stmt_bind_param($stmt, 'i', $id);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);

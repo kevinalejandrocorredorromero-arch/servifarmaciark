@@ -84,6 +84,17 @@ class Auth {
         }
     }
 
+    /** Exige rol vendedor o admin; si no, responde JSON 403 y termina. */
+    public static function requerirVendedor(): void {
+        self::requerirSesion();
+        if (!in_array(self::rol(), ['seller', 'admin'], true)) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => false, 'error' => 'Requiere permisos de vendedor'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
+
     /** Devuelve (o crea) el token CSRF de la sesión. */
     public static function tokenCsrf(): string {
         if (empty($_SESSION['_csrf'])) {

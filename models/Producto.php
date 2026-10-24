@@ -18,6 +18,18 @@ class ProductoModelo {
         return $productos;
     }
 
+    public function obtenerCategorias(): array {
+        $res = $this->db->query("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND categoria <> '' ORDER BY categoria");
+        if (!$res) return [];
+
+        $categorias = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $categorias[] = (string) $row['categoria'];
+        }
+        return $categorias;
+    }
+
+
     public function obtenerPorId(int $id): ?array {
         $stmt = $this->db->prepare("SELECT * FROM productos WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $id);

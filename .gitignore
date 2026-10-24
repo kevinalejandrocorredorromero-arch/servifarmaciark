@@ -25,6 +25,16 @@ codex-skills-master/
 codex-skills-master.zip
 0.mp3
 
+# Scripts de depuracion locales: sirven datos de pedidos y productos por web
+/debug_*.php
+/test_*.php
+/check_*.php
+/inspect_schema.php
+/product_49_info.php
+
+# Artefactos de pruebas locales
+/cookies.txt
+
 # Volcado obsoleto: no coincide con el esquema real (usar mysqldump de la BD local)
 /database.sql
 

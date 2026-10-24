@@ -2259,12 +2259,15 @@ footer small { color: var(--ink-500); font-size: 0.8rem; }
 }
 
 @media print {
-  .site-header,
-  .rk-bottom-nav,
-  .chat-fab,
-  .chat-window,
-  .about-sidebar,
-  .about-sidebar-overlay { display: none !important; }
+  body * {
+    visibility: hidden !important;
+  }
+  #receiptModal, #receiptModal * {
+    visibility: visible !important;
+  }
+  .modal-backdrop {
+    display: none !important;
+  }
 }
 
 /* =========================================================================

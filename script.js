@@ -887,10 +887,11 @@ async function appInit() {
       confirmOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...'
       const response = await apiClient.checkout({ deliveryInfo, items, total, paymentMethod })
       if (response.success) {
-        orderNumber.textContent = response.orderNumber || '#RK' + Date.now().toString().slice(-6)
+        const order = response.order || {};
+        console.log('Checkout success, order:', order);
         // Guardar el pedido para armar el enlace de WhatsApp de confirmación
         window.__lastOrder = {
-          orderNumber: orderNumber.textContent,
+          orderNumber: order.order_number || response.orderNumber || '#RK' + Date.now().toString().slice(-6),
           deliveryInfo,
           items,
           total,
@@ -899,11 +900,10 @@ async function appInit() {
         await clearCart()
         const checkoutModalInstance = bootstrap.Modal.getInstance(document.getElementById('checkoutModal'))
         checkoutModalInstance?.hide()
-        setTimeout(() => {
-          let confirmationModal = bootstrap.Modal.getInstance(document.getElementById('orderConfirmationModal'))
-          if (!confirmationModal) confirmationModal = new bootstrap.Modal(document.getElementById('orderConfirmationModal'))
-          confirmationModal.show()
-        }, 300)
+        // Mostrar recibo de compra
+        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'))
+        populateReceiptModal(order)
+        receiptModal.show()
         form.reset()
         showNotification('Pedido procesado correctamente', 'success')
       } else {
@@ -911,13 +911,60 @@ async function appInit() {
       }
     } catch (error) {
       console.error('Error en checkout:', error)
-      showNotification('No se pudo procesar el pedido', 'danger')
+      showNotification(error.message || 'No se pudo procesar el pedido', 'danger')
     } finally {
       confirmOrderBtn.disabled = false
       confirmOrderBtn.innerHTML = 'Confirmar Pedido'
       await loadProducts()
       await loadProductsTable()
       await loadOrdersData()
+    }
+  }
+
+  function populateReceiptModal(order) {
+    const orderNumberEl = document.getElementById('receiptOrderNumber')
+    const dateEl = document.getElementById('receiptDate')
+    const paymentMethodEl = document.getElementById('receiptPaymentMethod')
+    const totalEl = document.getElementById('receiptTotal')
+    const deliveryNameEl = document.getElementById('receiptDeliveryName')
+    const deliveryPhoneEl = document.getElementById('receiptDeliveryPhone')
+    const deliveryAddressEl = document.getElementById('receiptDeliveryAddress')
+    const itemsBody = document.getElementById('receiptItemsBody')
+
+    if (!orderNumberEl || !dateEl || !paymentMethodEl || !totalEl || !deliveryNameEl || !deliveryPhoneEl || !deliveryAddressEl || !itemsBody) {
+      console.error('Receipt modal elements not found')
+      return
+    }
+
+    orderNumberEl.textContent = order.order_number || '---'
+    const date = order.order_date ? new Date(order.order_date) : new Date()
+    dateEl.textContent = date.toLocaleString('es-CO')
+    paymentMethodEl.textContent = order.payment_method || '---'
+    totalEl.textContent = formatCurrency(order.total || 0)
+
+    const delivery = order.deliveryInfo || {}
+    deliveryNameEl.textContent = delivery.name || '---'
+    deliveryPhoneEl.textContent = delivery.phone || '---'
+    deliveryAddressEl.textContent = delivery.address || '---'
+
+    itemsBody.innerHTML = ''
+
+    const items = order.items || []
+    if (items.length === 0) {
+      const row = document.createElement('tr')
+      row.innerHTML = '<td colspan="4" class="text-center text-muted">No hay productos en este pedido.</td>'
+      itemsBody.appendChild(row)
+    } else {
+      items.forEach(item => {
+        const row = document.createElement('tr')
+        row.innerHTML = `
+          <td>${escapeHtml(item.name || 'Producto')}</td>
+          <td class="text-center">${item.quantity || 0}</td>
+          <td class="text-end">${formatCurrency(item.price || 0)}</td>
+          <td class="text-end">${formatCurrency(item.total || 0)}</td>
+        `
+        itemsBody.appendChild(row)
+      })
     }
   }
 
@@ -933,14 +980,19 @@ async function appInit() {
     }
   }
 
+  // El backend ha devuelto el rol con varios nombres a lo largo del tiempo
+  // (rol/role/es_admin/es_vendedor); se normaliza en un solo lugar.
+  function roleOf(userData) {
+    let role = (userData?.rol || userData?.role || '').toLowerCase()
+    if (role) return role
+    if (userData?.es_admin || userData?.isAdmin) return 'admin'
+    if (userData?.es_vendedor || userData?.isSeller) return 'seller'
+    return 'customer'
+  }
+
   function updateUIForLoggedInUser(userData) {
     if (!accountBtn) return
-    let role = (userData.rol || userData.role || '').toLowerCase()
-    if (!role) {
-      if (userData.es_admin || userData.isAdmin) role = 'admin'
-      else if (userData.es_vendedor || userData.isSeller) role = 'seller'
-      else role = 'customer'
-    }
+    const role = roleOf(userData)
     const nombre = `<span class="acc-name d-none d-xl-inline ms-2">${userData.name}</span>`
     if (role === 'admin') {
       accountBtn.innerHTML = `<i class="fa-solid fa-user-shield text-warning"></i>${nombre}`
@@ -1020,19 +1072,26 @@ async function appInit() {
     })
   }
 
+  // Abre el panel ya filtrado para vendedor y deja activa la pestaña pedida.
+  function abrirPanelVendedor(tabId, cargar) {
+    const panel = document.getElementById('adminPanel')
+    if (!panel) return
+    bootstrap.Modal.getOrCreateInstance(panel).show()
+    applyAdminPanelAccess('seller')
+    document.getElementById(tabId)?.click()
+    if (cargar) cargar()
+  }
+
   function showSellerMenu() {
     renderAccountMenu({
       name: currentUser?.name,
       roleLabel: 'Vendedor',
       roleIcon: 'fa-solid fa-barcode',
       items: [
-        { icon: 'fa-solid fa-barcode', label: 'Escáner de Venta', onClick: () => {
-            let adminPanelModal = bootstrap.Modal.getInstance(document.getElementById('adminPanel'))
-            if (!adminPanelModal) adminPanelModal = new bootstrap.Modal(document.getElementById('adminPanel'))
-            adminPanelModal.show()
-            applyAdminPanelAccess('seller')
-            loadSellerDashboard()
-          } },
+        { icon: 'fa-solid fa-barcode', label: 'Escáner de Venta', onClick: () => abrirPanelVendedor('barcode-tab', loadSellerDashboard) },
+        { icon: 'fa-solid fa-box', label: 'Productos y Stock', onClick: () => abrirPanelVendedor('products-tab', loadProductsTable) },
+        { icon: 'fa-solid fa-bell', label: 'Alertas de Inventario', onClick: () => abrirPanelVendedor('alerts-tab', loadExpirationAlerts) },
+        { icon: 'fa-solid fa-chart-line', label: 'Estadísticas de Ventas', onClick: () => abrirPanelVendedor('sales-tab', loadSellerOrdersData) },
         { divider: true },
         { icon: 'fa-solid fa-right-from-bracket', label: 'Cerrar Sesión', danger: true, onClick: logout },
       ],
@@ -1161,69 +1220,26 @@ async function appInit() {
   }
 
   function applyAdminPanelAccess(role) {
-    const allowedRoles = role === 'seller' ? ['seller'] : ['admin']
+    const esAdmin = role === 'admin'
+    // El admin ve todos los módulos, incluidos los que son solo de vendedor.
+    const esAccesible = (elemento) => {
+      const rolElemento = elemento.dataset.role || 'admin'
+      return esAdmin || rolElemento === 'both' || rolElemento === role
+    }
+
     document.querySelectorAll('#admin-tabs .nav-link').forEach((tab) => {
-      const tabRole = tab.dataset.role || 'admin'
-      const isAccessible = allowedRoles.includes(tabRole) || role === 'admin'
-      tab.classList.toggle('d-none', !isAccessible)
+      tab.classList.toggle('d-none', !esAccesible(tab))
     })
 
     document.querySelectorAll('#admin-tabContent .tab-pane').forEach((panel) => {
-      const panelRole = panel.dataset.role || 'admin'
-      const isAccessible = allowedRoles.includes(panelRole) || role === 'admin'
-      if (!isAccessible) {
+      if (!esAccesible(panel)) {
         panel.classList.remove('show', 'active')
       }
     })
 
-    if (role === 'seller') {
-      const salesTab = document.getElementById('sales-tab')
-      const barcodeTab = document.getElementById('barcode-tab')
-      if (salesTab) salesTab.classList.remove('d-none')
-      if (barcodeTab) barcodeTab.classList.remove('d-none')
-      const salesPanel = document.getElementById('sales-panel')
-      const barcodePanel = document.getElementById('barcode-panel')
-      if (salesPanel) salesPanel.classList.add('show', 'active')
-      if (barcodePanel) barcodePanel.classList.remove('show', 'active')
-    }
-  }
-
-  function showSellerMenu() {
-    const menu = document.createElement('div')
-    menu.className = 'position-fixed bg-white shadow-lg rounded p-3 admin-user-menu'
-    menu.style.cssText = 'top: 70px; right: 20px; z-index: 9999; min-width: 220px;'
-    menu.innerHTML = `
-      <div class="d-flex flex-column gap-2">
-        <button class="btn btn-primary btn-sm" id="openSellerPanelBtn">
-          <i class="fa-solid fa-barcode me-2"></i>Escáner de Venta
-        </button>
-        <button class="btn btn-outline-danger btn-sm" id="logoutBtn">
-          <i class="fa-solid fa-sign-out-alt me-2"></i>Cerrar Sesión
-        </button>
-      </div>
-    `
-    document.querySelectorAll('.admin-user-menu').forEach((m) => m.remove())
-    document.body.appendChild(menu)
-    document.getElementById('openSellerPanelBtn')?.addEventListener('click', () => {
-      menu.remove()
-      let adminPanelModal = bootstrap.Modal.getInstance(document.getElementById('adminPanel'))
-      if (!adminPanelModal) adminPanelModal = new bootstrap.Modal(document.getElementById('adminPanel'))
-      adminPanelModal.show()
-      applyAdminPanelAccess('seller')
-      loadSellerDashboard()
-    })
-    document.getElementById('logoutBtn')?.addEventListener('click', () => {
-      menu.remove()
-      logout()
-    })
-    setTimeout(() => {
-      document.addEventListener('click', function closeMenu(e) {
-        if (!menu.contains(e.target) && e.target !== accountBtn) {
-          menu.remove()
-          document.removeEventListener('click', closeMenu)
-        }
-      })
-    }, 100)
+    // El vendedor consulta el catálogo y mueve stock, pero no lo da de alta ni lo edita.
+    document.getElementById('addProductBtn')?.classList.toggle('d-none', !esAdmin)
+    document.getElementById('productsActionsHeader')?.classList.toggle('d-none', !esAdmin)
   }
 
   async function logout() {
@@ -1686,6 +1702,18 @@ async function appInit() {
       const tbody = document.getElementById('productsTableBody')
       if (!tbody) return
 
+      // El vendedor ve el catálogo y mueve stock, pero editar y borrar son del admin.
+      const esAdmin = roleOf(currentUser) === 'admin'
+      const celdaAcciones = (product) => esAdmin
+        ? `<td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editProduct(${product.id})">
+                  <i class="fa-solid fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>`
+        : ''
       let filteredProducts = products
       if (filterTerm && filterTerm.trim()) {
         const term = filterTerm.trim().toLowerCase()
@@ -1698,7 +1726,7 @@ async function appInit() {
       }
 
       if (filteredProducts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">
+        tbody.innerHTML = `<tr><td colspan="${esAdmin ? 5 : 4}" class="text-center text-muted py-4">
           <i class="fa-solid fa-search fa-2x mb-2 d-block opacity-50"></i>
           No se encontraron productos${filterTerm ? ` para "${filterTerm}"` : ''}
         </td></tr>`
@@ -1731,14 +1759,7 @@ async function appInit() {
                   </button>
                 </div>
               </td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="editProduct(${product.id})">
-                  <i class="fa-solid fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${product.id})">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </td>
+              ${celdaAcciones(product)}
             </tr>
             `,
             )
@@ -2460,12 +2481,7 @@ async function appInit() {
         }],
         total: productPrice * quantity,
         paymentMethod: 'cash',
-        seller_id: currentUser?.id || null,
-        deliveryInfo: {
-          name: currentUser?.name || 'Tienda Física',
-          phone: currentUser?.username || 'N/A',
-          address: 'Venta en tienda - Lector de códigos'
-        }
+        en_tienda: true
       })
       
       if (orderResponse.success) {
@@ -2523,6 +2539,8 @@ async function appInit() {
       resultContainer.innerHTML = '<p class="text-muted text-center">Escanea un código para ver los detalles</p>'
     }
   }
+
+  window.resetBarcodeScanner = resetBarcodeScanner
 
   window.confirmOrderDelivery = async function (orderId) {
     if (!confirm('¿Deseas confirmar la entrega de este pedido?')) return
@@ -2914,6 +2932,22 @@ async function appInit() {
     adminProductSearchClear?.addEventListener('click', () => {
       if (adminProductSearch) adminProductSearch.value = ''
       loadProductsTable()
+    })
+
+    // El admin entra también en los módulos de vendedor, que loadAdminData() no
+    // cubre; cargar al activar la pestaña evita que se vean vacíos.
+    const cargasPorPestana = {
+      'users-tab': loadUsersTable,
+      'products-tab': loadProductsTable,
+      'orders-tab': loadOrdersData,
+      'sales-tab': loadSellerOrdersData,
+      'barcode-tab': loadProducts,
+      'alerts-tab': loadExpirationAlerts,
+      'payments-tab': loadPaymentConfigAdmin,
+    }
+    document.getElementById('admin-tabs')?.addEventListener('shown.bs.tab', (e) => {
+      if (e.target.classList.contains('d-none')) return
+      cargasPorPestana[e.target.id]?.()
     })
     
     // Barcode Scanner listeners

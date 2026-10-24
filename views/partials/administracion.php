@@ -14,7 +14,7 @@
                 <button class="nav-link active" id="users-tab" data-role="admin" data-bs-toggle="pill" data-bs-target="#users-panel" type="button">
                   <i class="fa-solid fa-users me-2"></i>Gestionar Usuarios
                 </button>
-                <button class="nav-link" id="products-tab" data-role="admin" data-bs-toggle="pill" data-bs-target="#products-panel" type="button">
+                <button class="nav-link" id="products-tab" data-role="both" data-bs-toggle="pill" data-bs-target="#products-panel" type="button">
                   <i class="fa-solid fa-box me-2"></i>Gestionar Productos
                 </button>
                 <button class="nav-link" id="orders-tab" data-role="admin" data-bs-toggle="pill" data-bs-target="#orders-panel" type="button">
@@ -29,7 +29,7 @@
                   <i class="fa-solid fa-barcode me-2"></i>Lector de Códigos de Barras
                 </button>
                 <!-- Adding Expiration Alerts Dashboard Tab -->
-                <button class="nav-link" id="alerts-tab" data-role="admin" data-bs-toggle="pill" data-bs-target="#alerts-panel" type="button">
+                <button class="nav-link" id="alerts-tab" data-role="both" data-bs-toggle="pill" data-bs-target="#alerts-panel" type="button">
                   <i class="fa-solid fa-bell me-2"></i>Alertas de Vencimiento
                 </button>
                 <button class="nav-link" id="payments-tab" data-role="admin" data-bs-toggle="pill" data-bs-target="#payments-panel" type="button">
@@ -66,7 +66,7 @@
                 </div>
                 
                 <!-- Products Management Panel -->
-                <div class="tab-pane fade" id="products-panel" data-role="admin">
+                <div class="tab-pane fade" id="products-panel" data-role="both">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6>Gestión de Productos</h6>
                     <button class="btn btn-primary btn-sm" id="addProductBtn">
@@ -229,7 +229,7 @@
                           <th>Categoría</th>
                           <th>Precio</th>
                           <th>Stock</th>
-                          <th>Acciones</th>
+                          <th id="productsActionsHeader">Acciones</th>
                         </tr>
                       </thead>
                       <tbody id="productsTableBody">
@@ -472,7 +472,7 @@
                 </div>
                 
                 <!-- Expiration Alerts Panel -->
-                <div class="tab-pane fade" id="alerts-panel" data-role="admin">
+                <div class="tab-pane fade" id="alerts-panel" data-role="both">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <h6 class="mb-0">Alertas de Vencimiento - Centro de Control</h6>
                     <a href="#" id="notifyAlertsByWhatsapp" target="_blank" rel="noopener" class="btn btn-success btn-sm">

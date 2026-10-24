@@ -26,31 +26,45 @@ class PedidoControlador extends Controlador {
             return;
         }
 
-        $deliveryInfo = $data['deliveryInfo'] ?? [];
-        if (!is_array($deliveryInfo)) {
-            $this->error('Información de entrega inválida');
-            return;
+        // Las ventas de mostrador (lector de códigos de barras) no llevan datos de
+        // entrega: las registra el personal y el pedido queda a su nombre.
+        if (!empty($data['en_tienda'])) {
+            if (!in_array(Auth::rol(), ['seller', 'admin'], true)) {
+                $this->error('Solo el personal puede registrar ventas en tienda', 403);
+                return;
+            }
+            $data['deliveryInfo'] = [
+                'name'    => 'Venta en tienda',
+                'phone'   => '',
+                'address' => 'Mostrador',
+            ];
+        } else {
+            $deliveryInfo = $data['deliveryInfo'] ?? [];
+            if (!is_array($deliveryInfo)) {
+                $this->error('Información de entrega inválida');
+                return;
+            }
+            $nombreEntrega = trim((string) ($deliveryInfo['name'] ?? ''));
+            $telefonoEntrega = trim((string) ($deliveryInfo['phone'] ?? ''));
+            $direccionEntrega = trim((string) ($deliveryInfo['address'] ?? ''));
+            if ($nombreEntrega === '' || $telefonoEntrega === '' || $direccionEntrega === '') {
+                $this->error('Información de entrega incompleta');
+                return;
+            }
+            if (mb_strlen($nombreEntrega) > 120 || mb_strlen($telefonoEntrega) > 30 || mb_strlen($direccionEntrega) > 300) {
+                $this->error('La información de entrega supera el límite permitido');
+                return;
+            }
+            if (!preg_match('/^[0-9+()\-\s]{7,30}$/', $telefonoEntrega)) {
+                $this->error('Teléfono de entrega inválido');
+                return;
+            }
+            $data['deliveryInfo'] = [
+                'name' => $nombreEntrega,
+                'phone' => $telefonoEntrega,
+                'address' => $direccionEntrega,
+            ];
         }
-        $nombreEntrega = trim((string) ($deliveryInfo['name'] ?? ''));
-        $telefonoEntrega = trim((string) ($deliveryInfo['phone'] ?? ''));
-        $direccionEntrega = trim((string) ($deliveryInfo['address'] ?? ''));
-        if ($nombreEntrega === '' || $telefonoEntrega === '' || $direccionEntrega === '') {
-            $this->error('Información de entrega incompleta');
-            return;
-        }
-        if (mb_strlen($nombreEntrega) > 120 || mb_strlen($telefonoEntrega) > 30 || mb_strlen($direccionEntrega) > 300) {
-            $this->error('La información de entrega supera el límite permitido');
-            return;
-        }
-        if (!preg_match('/^[0-9+()\-\s]{7,30}$/', $telefonoEntrega)) {
-            $this->error('Teléfono de entrega inválido');
-            return;
-        }
-        $data['deliveryInfo'] = [
-            'name' => $nombreEntrega,
-            'phone' => $telefonoEntrega,
-            'address' => $direccionEntrega,
-        ];
 
         if (!is_array($data['items']) || count($data['items']) > 100) {
             $this->error('Lista de productos inválida');
@@ -104,11 +118,18 @@ class PedidoControlador extends Controlador {
                 (string) ($data['paymentMethod'] ?? $data['metodo_pago'] ?? 'cash'),
                 $data['deliveryInfo'],
                 $resumenPedido['items'] ?? [],
-                (int) ($resumenPedido['pedido_id'] ?? 0)
+                (int) ($resumenPedido['pedido_id'] ?? 0),
+                (string) ($resumenPedido['estado'] ?? 'pendiente')
             );
             // Si la compra dejó algún producto en stock bajo, alerta aparte.
             notificarStockBajoTrasPedido($resumenPedido['stock_transiciones'] ?? []);
-            $this->success(['orderNumber' => $orderNumber]);
+
+            // Devolver los datos completos del pedido para mostrar un recibo.
+            $orderId = $resumenPedido['pedido_id'] ?? 0;
+            $userId = Auth::idUsuario();
+            $rol = Auth::rol();
+            $order = $model->obtenerPorId($orderId, $userId, $rol);
+            $this->success(['orderNumber' => $orderNumber, 'order' => $order]);
         } else {
             $this->error('Error al procesar el pedido');
         }

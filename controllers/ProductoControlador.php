@@ -12,6 +12,11 @@ class ProductoControlador extends Controlador {
         $this->success(['products' => $model->obtenerTodos()]);
     }
 
+    public function obtenerCategorias(): void {
+        $model = new ProductoModelo();
+        $this->success(['categories' => $model->obtenerCategorias()]);
+    }
+
     public function obtenerPorId(): void {
         $id = (int) ($_GET['id'] ?? 0);
         if ($id <= 0) {

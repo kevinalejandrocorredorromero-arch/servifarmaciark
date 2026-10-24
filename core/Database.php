@@ -45,7 +45,11 @@ class Database {
     }
 
     public function prepare(string $sql) {
-        return mysqli_prepare($this->conexion, $sql);
+        $stmt = mysqli_prepare($this->conexion, $sql);
+        if (!$stmt) {
+            error_log('[Database] Error al preparar consulta: ' . mysqli_error($this->conexion) . ' | SQL: ' . $sql);
+        }
+        return $stmt;
     }
 
     public function insertId(): int {
